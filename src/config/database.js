@@ -13,7 +13,7 @@ const db = new sqlite3.Database('./inventory.sqlite', (err) => {
         console.log('✅ Connected to the SQLite database.');
 
         // 3. Create the Tables
-        // db.serialize() tells Node.js: "Run these SQL queries one after the other, in exact order."
+        // db.serialize() tells Node.js: "aRun these SQL queries one after the other, in exact order."
         // We don't want it trying to create Sales before Products exists!
         db.serialize(() => {
 
