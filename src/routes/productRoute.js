@@ -50,5 +50,30 @@ router.post('/transactions/purchase', (req, res) => {
     });
 });
 
-// 3. Export the Router
+// Import the new Report Model at the top of the file (or right here)
+const ReportModel = require('../model/reportModel');
+
+// GET /api/reports/summary?start=YYYY-MM-DD&end=YYYY-MM-DD
+router.get('/reports/summary', (req, res) => {
+    // Grab the dates from the URL, or default to a massive range if none provided
+    const startDate = req.query.start || '2000-01-01';
+    const endDate = req.query.end || '2099-12-31';
+
+    ReportModel.getSummaryByDate(startDate, endDate, (err, data) => {
+        if (err) return res.status(500).json({ error: "Failed to generate summary report" });
+        res.json(data);
+    });
+});
+
+// GET /api/reports/daily?start=YYYY-MM-DD&end=YYYY-MM-DD
+router.get('/reports/daily', (req, res) => {
+    const startDate = req.query.start || '2000-01-01';
+    const endDate = req.query.end || '2099-12-31';
+
+    ReportModel.getDailySalesReport(startDate, endDate, (err, data) => {
+        if (err) return res.status(500).json({ error: "Failed to generate daily report" });
+        res.json(data);
+    });
+});
+
 module.exports = router;
