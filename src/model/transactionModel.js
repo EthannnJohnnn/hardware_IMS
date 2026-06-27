@@ -38,20 +38,29 @@ const TransactionModel = {
 
     // --- FUNCTION 2: Record a Purchase/Restock (Adds to stock) ---
     // 'purchaseData' will contain { item_code: "AB-001", quantity: 50 }
+    // --- FUNCTION 2: Record a Purchase/Restock (Adds to stock) ---
     recordPurchase: (purchaseData, callback) => {
         
-        // Step A: Save the record into the 'purchases' history table
-        const insertPurchaseQuery = `INSERT INTO purchases (item_code, quantity) VALUES (?, ?)`;
+        // PHASE 4 UPDATE: Added cost_price and supplier to the INSERT statement
+        const insertPurchaseQuery = `
+            INSERT INTO purchases (item_code, quantity, cost_price, supplier) 
+            VALUES (?, ?, ?, ?)
+        `;
 
-        db.run(insertPurchaseQuery, [purchaseData.item_code, purchaseData.quantity], function(err) {
+        const values = [
+            purchaseData.item_code, 
+            purchaseData.quantity, 
+            purchaseData.cost_price, 
+            purchaseData.supplier
+        ];
+
+        db.run(insertPurchaseQuery, values, function(err) {
             if (err) {
                 console.error("Error recording purchase:", err);
                 return callback(err, null);
             }
 
-            // Step B: Update the product's stock.
-            // Notice the math here: "current_stock = current_stock + ?"
-            // This exactly mimics the Excel addition formula!
+            // Step B: Update the product's stock (Same as before)
             const updateStockQuery = `UPDATE products SET current_stock = current_stock + ? WHERE item_code = ?`;
 
             db.run(updateStockQuery, [purchaseData.quantity, purchaseData.item_code], function(err) {

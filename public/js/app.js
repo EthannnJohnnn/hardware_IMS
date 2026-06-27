@@ -97,18 +97,40 @@ function openTransactionModal(itemCode, itemName) {
     currentTransactionModal.show();
 }
 
-// This runs when you click "Confirm" inside the transaction modal
+// NEW: Listen for dropdown changes to show/hide the Purchase fields
+document.getElementById('transactionType').addEventListener('change', function() {
+    const purchaseFields = document.getElementById('purchaseFields');
+    if (this.value === 'purchase') {
+        purchaseFields.classList.remove('d-none'); // Show fields
+    } else {
+        purchaseFields.classList.add('d-none');    // Hide fields
+    }
+});
+
+// UPDATED: Transaction confirmation logic
 document.getElementById('saveTransactionBtn').addEventListener('click', async () => {
     const itemCode = document.getElementById('transactionItemCode').value;
     const type = document.getElementById('transactionType').value;
     const quantity = parseInt(document.getElementById('transactionQuantity').value);
 
+    // Base data needed for both Sales and Purchases
     const transactionData = {
         item_code: itemCode,
         quantity: quantity
     };
 
-    // Determine the correct API route based on the dropdown selection
+    // PHASE 4 ADDITION: If it's a purchase, grab the extra financial data
+    if (type === 'purchase') {
+        transactionData.supplier = document.getElementById('transactionSupplier').value;
+        transactionData.cost_price = parseFloat(document.getElementById('transactionCostPrice').value);
+        
+        // Simple validation to ensure they don't leave it blank
+        if (!transactionData.supplier || !transactionData.cost_price) {
+            alert("Please enter both Supplier and Cost Price for restocks.");
+            return;
+        }
+    }
+
     const apiUrl = type === 'sale' ? '/api/transactions/sale' : '/api/transactions/purchase';
 
     try {
@@ -119,10 +141,16 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
         });
 
         if (response.ok) {
-            currentTransactionModal.hide(); // Hide the pop-up
-            loadProducts(); // Refresh the table to see the math updated instantly!
+            currentTransactionModal.hide(); 
+            // Clear the inputs for the next time
+            document.getElementById('transactionSupplier').value = '';
+            document.getElementById('transactionCostPrice').value = '';
+            document.getElementById('transactionType').value = 'sale'; // Reset to default
+            document.getElementById('purchaseFields').classList.add('d-none');
+            
+            loadProducts(); 
         } else {
-            alert("Transaction failed. Check console for details.");
+            alert("Transaction failed. Check server console.");
         }
     } catch (error) {
         console.error("Error processing transaction:", error);
