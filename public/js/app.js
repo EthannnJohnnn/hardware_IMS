@@ -9,6 +9,9 @@ async function loadProducts() {
         const response = await fetch('/api/products');
         const products = await response.json();
 
+        // Update the dashboard count
+        document.getElementById('totalProductsText').innerText = products.length + " Items";
+
         const tableBody = document.getElementById('productTableBody');
         tableBody.innerHTML = ''; // Clear the table before loading
 
@@ -141,14 +144,16 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
         });
 
         if (response.ok) {
-            currentTransactionModal.hide(); 
+            currentTransactionModal.hide(); // Hide the pop-up
+            
             // Clear the inputs for the next time
             document.getElementById('transactionSupplier').value = '';
             document.getElementById('transactionCostPrice').value = '';
-            document.getElementById('transactionType').value = 'sale'; // Reset to default
+            document.getElementById('transactionType').value = 'sale'; 
             document.getElementById('purchaseFields').classList.add('d-none');
             
-            loadProducts(); 
+            loadProducts();         // <-- This updates the Table!
+            loadDashboardSummary(); // <-- This updates the Math instantly!
         } else {
             alert("Transaction failed. Check server console.");
         }
@@ -162,3 +167,101 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
 // ==========================================
 // When the page first loads, fetch the data immediately
 loadProducts();
+
+// ==========================================
+// 5. SIDEBAR NAVIGATION LOGIC (Single Page App)
+// ==========================================
+function switchView(viewId, linkId, titleText) {
+    // 1. Hide ALL views
+    document.getElementById('view-dashboard').classList.add('d-none');
+    document.getElementById('view-inventory').classList.add('d-none');
+    document.getElementById('view-sales').classList.add('d-none'); 
+    
+    // 2. Show the requested view
+    document.getElementById(viewId).classList.remove('d-none');
+    
+    // 3. Reset ALL sidebar links to grey
+    document.getElementById('nav-dashboard').className = 'nav-link text-dark';
+    document.getElementById('nav-inventory').className = 'nav-link text-dark';
+    document.getElementById('nav-sales').className = 'nav-link text-dark';    
+    
+    // 4. Highlight the clicked link in blue
+    document.getElementById(linkId).className = 'nav-link active';
+
+    // 5. Change the top title
+    document.getElementById('pageTitle').innerText = titleText;
+}
+
+// Attach event listeners to the remaining THREE buttons
+document.getElementById('nav-dashboard').addEventListener('click', () => {
+    switchView('view-dashboard', 'nav-dashboard', 'Dashboard Overview');
+    loadDashboardSummary(); 
+});
+
+document.getElementById('nav-inventory').addEventListener('click', () => {
+    switchView('view-inventory', 'nav-inventory', 'Inventory Management');
+});
+
+document.getElementById('nav-sales').addEventListener('click', () => {
+    switchView('view-sales', 'nav-sales', 'Sales & Purchases History');
+    loadDailyReports(); // <-- Fetches the reporting data when tab is clicked
+});
+
+// ==========================================
+// 6. FETCH PHASE 5 FINANCIAL REPORTS
+// ==========================================
+async function loadDashboardSummary() {
+    try {
+        const response = await fetch('/api/reports/summary');
+        const data = await response.json();
+
+        // This built-in JS tool formats raw numbers into perfect Philippine Pesos!
+        const currencyFormatter = new Intl.NumberFormat('en-PH', { 
+            style: 'currency', 
+            currency: 'PHP' 
+        });
+
+        // Update the HTML text with the real numbers from your backend
+        document.getElementById('totalSalesText').innerText = currencyFormatter.format(data.total_sales || 0);
+        document.getElementById('netProfitText').innerText = currencyFormatter.format(data.net_amount || 0);
+        
+    } catch (error) {
+        console.error("Error loading financial summary:", error);
+    }
+}
+
+// Call this when the page first loads
+loadDashboardSummary();
+
+// ==========================================
+// 7. FETCH DAILY REPORTS (Sales & Purchases Tab)
+// ==========================================
+async function loadDailyReports() {
+    try {
+        const response = await fetch('/api/reports/daily');
+        const dailyData = await response.json();
+
+        const tableBody = document.getElementById('dailyReportTableBody');
+        tableBody.innerHTML = ''; // Clear table before loading
+
+        const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
+        for (const day of dailyData) {
+            // Determine if profit is positive (green) or negative (red)
+            let profitColor = day.gross_profit >= 0 ? 'text-success' : 'text-danger';
+
+            const row = `
+                <tr>
+                    <td class="fw-bold">${day.report_date}</td>
+                    <td>${day.items_sold}</td>
+                    <td>${currencyFormatter.format(day.total_revenue)}</td>
+                    <td>${currencyFormatter.format(day.total_cogs)}</td>
+                    <td class="fw-bold ${profitColor}">${currencyFormatter.format(day.gross_profit)}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        }
+    } catch (error) {
+        console.error("Error loading daily reports:", error);
+    }
+}

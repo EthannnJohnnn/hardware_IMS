@@ -16,11 +16,10 @@
             <h4 class="text-primary fw-bold mb-4">⚙️ Hardware IMS</h4>
             <ul class="nav nav-pills flex-column mb-auto">
                 <li class="nav-item">
-                    <a href="#" class="nav-link active" aria-current="page">Dashboard</a>
+                    <a href="#" id="nav-dashboard" class="nav-link active">Dashboard</a>
                 </li>
-                <li><a href="#" class="nav-link text-dark">Inventory</a></li>
-                <li><a href="#" class="nav-link text-dark">Products</a></li>
-                <li><a href="#" class="nav-link text-dark">Sales & Purchases</a></li>
+                <li><a href="#" id="nav-inventory" class="nav-link text-dark">Inventory</a></li>
+                <li><a href="#" id="nav-sales" class="nav-link text-dark">Sales & Purchases</a></li>
             </ul>
         </div>
 
@@ -28,7 +27,7 @@
 
             <nav class="navbar navbar-light bg-white p-3 rounded shadow-sm mb-4">
                 <div class="container-fluid d-flex justify-content-between">
-                    <span class="navbar-brand mb-0 h1">Dashboard Overview</span>
+                    <span class="navbar-brand mb-0 h1" id="pageTitle">Dashboard Overview</span>
                     <form class="d-flex w-50">
                         <input class="form-control me-2 bg-light border-0" type="search" placeholder="Search inventory..." aria-label="Search">
                     </form>
@@ -39,56 +38,93 @@
                 </div>
             </nav>
 
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body">
-                            <h6 class="text-muted">Total Sales Value</h6>
-                            <h3 class="fw-bold text-success">₱124,500.00</h3>
+            <div id="view-dashboard">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h6 class="text-muted">Total Sales Revenue</h6>
+                                <h3 class="fw-bold text-primary" id="totalSalesText">₱0.00</h3>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body">
-                            <h6 class="text-muted">Total Products in Database</h6>
-                            <h3 class="fw-bold">142 Items</h3>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h6 class="text-muted">Net Profit</h6>
+                                <h3 class="fw-bold text-success" id="netProfitText">₱0.00</h3>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-4 d-flex align-items-center justify-content-end">
-                    <button class="btn btn-primary btn-lg shadow-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                        + Add New Product
-                    </button>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h6 class="text-muted">Total Products in Database</h6>
+                                <h3 class="fw-bold text-dark" id="totalProductsText">-- Items</h3>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white pt-3 pb-2">
-                    <h5 class="fw-bold">Current Inventory</h5>
+            <div id="view-inventory" class="d-none">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold m-0">Product Management</h4>
+                    <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                        + Add New Product
+                    </button>
                 </div>
-                <div class="card-body p-0">
-                    <table class="table table-hover table-striped mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Item Code</th>
-                                <th>Item Name</th>
-                                <th>Cost Price</th>
-                                <th>SRP</th>
-                                <th>Current Stock</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productTableBody">
-                            
-                        </tbody>
-                    </table>
+                
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item Code</th>
+                                    <th>Item Name</th>
+                                    <th>Cost Price</th>
+                                    <th>SRP</th>
+                                    <th>Current Stock</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-sales" class="d-none">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold m-0">Daily Sales & Profit Report</h4>
+                    <button class="btn btn-outline-secondary btn-sm shadow-sm">
+                        Export to Excel
+                    </button>
+                </div>
+                
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <table class="table table-hover table-striped mb-0 text-center">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Items Sold</th>
+                                    <th>Revenue (Sales)</th>
+                                    <th>COGS (Item Costs)</th>
+                                    <th>Gross Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dailyReportTableBody">
+                                </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
         </div> 
     </div> 
-    
+
     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
