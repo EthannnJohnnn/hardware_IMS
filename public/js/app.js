@@ -172,18 +172,20 @@ loadProducts();
 // 5. SIDEBAR NAVIGATION LOGIC (Single Page App)
 // ==========================================
 function switchView(viewId, linkId, titleText) {
-    // 1. Hide ALL views
+    // 1. Hide ALL 4 views (Put the invisibility cloak on everything)
     document.getElementById('view-dashboard').classList.add('d-none');
     document.getElementById('view-inventory').classList.add('d-none');
     document.getElementById('view-sales').classList.add('d-none'); 
+    document.getElementById('view-expenses').classList.add('d-none'); // Added this!
     
-    // 2. Show the requested view
+    // 2. Show the requested view (Take the cloak off the one we want)
     document.getElementById(viewId).classList.remove('d-none');
     
-    // 3. Reset ALL sidebar links to grey
+    // 3. Reset ALL 4 sidebar links to grey
     document.getElementById('nav-dashboard').className = 'nav-link text-dark';
     document.getElementById('nav-inventory').className = 'nav-link text-dark';
     document.getElementById('nav-sales').className = 'nav-link text-dark';    
+    document.getElementById('nav-expenses').className = 'nav-link text-dark'; // Added this!
     
     // 4. Highlight the clicked link in blue
     document.getElementById(linkId).className = 'nav-link active';
@@ -192,7 +194,7 @@ function switchView(viewId, linkId, titleText) {
     document.getElementById('pageTitle').innerText = titleText;
 }
 
-// Attach event listeners to the remaining THREE buttons
+// Attach event listeners to ALL FOUR buttons
 document.getElementById('nav-dashboard').addEventListener('click', () => {
     switchView('view-dashboard', 'nav-dashboard', 'Dashboard Overview');
     loadDashboardSummary(); 
@@ -204,7 +206,13 @@ document.getElementById('nav-inventory').addEventListener('click', () => {
 
 document.getElementById('nav-sales').addEventListener('click', () => {
     switchView('view-sales', 'nav-sales', 'Sales & Purchases History');
-    loadDailyReports(); // <-- Fetches the reporting data when tab is clicked
+    loadDailyReports(); 
+});
+
+// NEW: The Expenses Link Listener
+document.getElementById('nav-expenses').addEventListener('click', () => {
+    switchView('view-expenses', 'nav-expenses', 'Operating Expenses');
+    loadExpenses(); // Fetches the data when they click the tab
 });
 
 // ==========================================
@@ -265,3 +273,64 @@ async function loadDailyReports() {
         console.error("Error loading daily reports:", error);
     }
 }
+
+// ==========================================
+// 8. EXPENSES LOGIC
+// ==========================================
+async function loadExpenses() {
+    try {
+        const response = await fetch('/api/expenses');
+        const expenses = await response.json();
+        
+        const tableBody = document.getElementById('expenseTableBody');
+        tableBody.innerHTML = ''; 
+
+        const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
+        for (const exp of expenses) {
+            const row = `
+                <tr>
+                    <td>${exp.expense_date}</td>
+                    <td>${exp.description}</td>
+                    <td class="text-danger fw-bold">-${currencyFormatter.format(exp.amount)}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        }
+    } catch (error) {
+        console.error("Error loading expenses:", error);
+    }
+}
+
+document.getElementById('saveExpenseBtn').addEventListener('click', async () => {
+    const expenseData = {
+        description: document.getElementById('expenseDescInput').value,
+        amount: parseFloat(document.getElementById('expenseAmountInput').value)
+    };
+
+    if (!expenseData.description || !expenseData.amount) {
+        alert("Please enter a description and an amount.");
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/expenses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(expenseData)
+        });
+
+        if (response.ok) {
+            // Hide modal and clear inputs
+            bootstrap.Modal.getInstance(document.getElementById('expenseModal')).hide();
+            document.getElementById('expenseDescInput').value = '';
+            document.getElementById('expenseAmountInput').value = '';
+            
+            // Reload table and update dashboard math
+            loadExpenses();
+            loadDashboardSummary();
+        }
+    } catch (error) {
+        console.error("Error saving expense:", error);
+    }
+});

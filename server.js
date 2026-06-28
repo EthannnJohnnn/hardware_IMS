@@ -12,6 +12,7 @@ app.use(express.json());
 // 👇 ADD THIS NEW LINE 👇
 // This tells Express to host all your HTML and CSS files!
 app.use(express.static('public'));
+app.use('/api/expenses', require('./src/routes/expenseRoute'));
 
 app.use('/api', productRoutes);
 
