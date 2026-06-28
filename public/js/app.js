@@ -5,20 +5,15 @@
 // ==========================================
 async function loadProducts() {
     try {
-        // Call our Express API (the Waiter)
         const response = await fetch('/api/products');
         const products = await response.json();
 
-        // Update the dashboard count
         document.getElementById('totalProductsText').innerText = products.length + " Items";
 
         const tableBody = document.getElementById('productTableBody');
-        tableBody.innerHTML = ''; // Clear the table before loading
+        tableBody.innerHTML = ''; 
 
-        // Loop through the array of SQLite data and build HTML rows
         for (const product of products) {
-            
-            // Determine stock badge color based on quantity
             let stockBadge = 'bg-success';
             if (product.current_stock <= 5) stockBadge = 'bg-warning text-dark';
             if (product.current_stock === 0) stockBadge = 'bg-danger';
@@ -38,29 +33,24 @@ async function loadProducts() {
                     </td>
                 </tr>
             `;
-            // Add the row to the table
             tableBody.innerHTML += row;
         }
-    } catch (error) {
-        console.error("Error loading products:", error);
-    }
+    } catch (error) { console.error("Error loading products:", error); }
 }
 
 // ==========================================
 // 2. ADD NEW PRODUCT LOGIC
 // ==========================================
 document.getElementById('saveProductBtn').addEventListener('click', async () => {
-    // Gather data from the form
     const newProduct = {
         item_code: document.getElementById('itemCodeInput').value,
         item_name: document.getElementById('itemNameInput').value,
         cost_price: parseFloat(document.getElementById('costPriceInput').value),
         srp: parseFloat(document.getElementById('srpInput').value),
-        current_stock: 0 // Starts at 0
+        current_stock: 0 
     };
 
     try {
-        // Send a POST request to the API
         const response = await fetch('/api/products', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -68,70 +58,46 @@ document.getElementById('saveProductBtn').addEventListener('click', async () => 
         });
 
         if (response.ok) {
-            // Close the Bootstrap modal safely
-            const modalElement = document.getElementById('addProductModal');
-            const modalInstance = bootstrap.Modal.getInstance(modalElement);
-            modalInstance.hide();
-
-            // Clear the form inputs
+            bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
             document.getElementById('addProductForm').reset();
-
-            // Reload the table to show the new item instantly!
             loadProducts();
         }
-    } catch (error) {
-        console.error("Error saving product:", error);
-    }
+    } catch (error) { console.error("Error saving product:", error); }
 });
 
 // ==========================================
 // 3. TRANSACTION LOGIC (SALES/PURCHASES)
 // ==========================================
-let currentTransactionModal; // To hold the Bootstrap modal instance
+let currentTransactionModal; 
 
-// This runs when you click the "Transact" button on a specific table row
 function openTransactionModal(itemCode, itemName) {
     document.getElementById('transactionItemCode').value = itemCode;
     document.getElementById('transactionItemName').innerText = `Item: ${itemName}`;
     document.getElementById('transactionQuantity').value = 1;
-
-    // Open the modal using Bootstrap's JS API
     currentTransactionModal = new bootstrap.Modal(document.getElementById('transactionModal'));
     currentTransactionModal.show();
 }
 
-// NEW: Listen for dropdown changes to show/hide the Purchase fields
 document.getElementById('transactionType').addEventListener('change', function() {
     const purchaseFields = document.getElementById('purchaseFields');
     if (this.value === 'purchase') {
-        purchaseFields.classList.remove('d-none'); // Show fields
+        purchaseFields.classList.remove('d-none'); 
     } else {
-        purchaseFields.classList.add('d-none');    // Hide fields
+        purchaseFields.classList.add('d-none');    
     }
 });
 
-// UPDATED: Transaction confirmation logic
 document.getElementById('saveTransactionBtn').addEventListener('click', async () => {
     const itemCode = document.getElementById('transactionItemCode').value;
     const type = document.getElementById('transactionType').value;
     const quantity = parseInt(document.getElementById('transactionQuantity').value);
 
-    // Base data needed for both Sales and Purchases
-    const transactionData = {
-        item_code: itemCode,
-        quantity: quantity
-    };
+    const transactionData = { item_code: itemCode, quantity: quantity };
 
-    // PHASE 4 ADDITION: If it's a purchase, grab the extra financial data
     if (type === 'purchase') {
         transactionData.supplier = document.getElementById('transactionSupplier').value;
         transactionData.cost_price = parseFloat(document.getElementById('transactionCostPrice').value);
-        
-        // Simple validation to ensure they don't leave it blank
-        if (!transactionData.supplier || !transactionData.cost_price) {
-            alert("Please enter both Supplier and Cost Price for restocks.");
-            return;
-        }
+        if (!transactionData.supplier || !transactionData.cost_price) return alert("Please enter Supplier and Cost Price.");
     }
 
     const apiUrl = type === 'sale' ? '/api/transactions/sale' : '/api/transactions/purchase';
@@ -144,120 +110,96 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
         });
 
         if (response.ok) {
-            currentTransactionModal.hide(); // Hide the pop-up
-            
-            // Clear the inputs for the next time
+            currentTransactionModal.hide(); 
             document.getElementById('transactionSupplier').value = '';
             document.getElementById('transactionCostPrice').value = '';
             document.getElementById('transactionType').value = 'sale'; 
             document.getElementById('purchaseFields').classList.add('d-none');
             
-            loadProducts();         // <-- This updates the Table!
-            loadDashboardSummary(); // <-- This updates the Math instantly!
-        } else {
-            alert("Transaction failed. Check server console.");
-        }
-    } catch (error) {
-        console.error("Error processing transaction:", error);
-    }
+            loadProducts();         
+            loadDashboardSummary(); 
+        } else { alert("Transaction failed. Check server console."); }
+    } catch (error) { console.error("Error processing transaction:", error); }
 });
 
 // ==========================================
 // 4. INITIALIZE DASHBOARD
 // ==========================================
-// When the page first loads, fetch the data immediately
 loadProducts();
+loadDashboardSummary();
 
 // ==========================================
 // 5. SIDEBAR NAVIGATION LOGIC (Single Page App)
 // ==========================================
 function switchView(viewId, linkId, titleText) {
-    // 1. Hide ALL 4 views (Put the invisibility cloak on everything)
+    // Hide ALL 5 views
     document.getElementById('view-dashboard').classList.add('d-none');
     document.getElementById('view-inventory').classList.add('d-none');
     document.getElementById('view-sales').classList.add('d-none'); 
-    document.getElementById('view-expenses').classList.add('d-none'); // Added this!
+    document.getElementById('view-expenses').classList.add('d-none');
+    document.getElementById('view-ar').classList.add('d-none'); 
     
-    // 2. Show the requested view (Take the cloak off the one we want)
+    // Show requested view
     document.getElementById(viewId).classList.remove('d-none');
     
-    // 3. Reset ALL 4 sidebar links to grey
+    // Reset ALL 5 links
     document.getElementById('nav-dashboard').className = 'nav-link text-dark';
     document.getElementById('nav-inventory').className = 'nav-link text-dark';
     document.getElementById('nav-sales').className = 'nav-link text-dark';    
-    document.getElementById('nav-expenses').className = 'nav-link text-dark'; // Added this!
+    document.getElementById('nav-expenses').className = 'nav-link text-dark'; 
+    document.getElementById('nav-ar').className = 'nav-link text-dark'; 
     
-    // 4. Highlight the clicked link in blue
+    // Highlight clicked link
     document.getElementById(linkId).className = 'nav-link active';
-
-    // 5. Change the top title
     document.getElementById('pageTitle').innerText = titleText;
 }
 
-// Attach event listeners to ALL FOUR buttons
 document.getElementById('nav-dashboard').addEventListener('click', () => {
     switchView('view-dashboard', 'nav-dashboard', 'Dashboard Overview');
     loadDashboardSummary(); 
 });
-
 document.getElementById('nav-inventory').addEventListener('click', () => {
     switchView('view-inventory', 'nav-inventory', 'Inventory Management');
 });
-
 document.getElementById('nav-sales').addEventListener('click', () => {
     switchView('view-sales', 'nav-sales', 'Sales & Purchases History');
     loadDailyReports(); 
 });
-
-// NEW: The Expenses Link Listener
 document.getElementById('nav-expenses').addEventListener('click', () => {
     switchView('view-expenses', 'nav-expenses', 'Operating Expenses');
-    loadExpenses(); // Fetches the data when they click the tab
+    loadExpenses();
+});
+document.getElementById('nav-ar').addEventListener('click', () => {
+    switchView('view-ar', 'nav-ar', 'Accounts Receivable');
+    loadAR(); 
 });
 
 // ==========================================
-// 6. FETCH PHASE 5 FINANCIAL REPORTS
+// 6. DASHBOARD FINANCIAL SUMMARY
 // ==========================================
 async function loadDashboardSummary() {
     try {
         const response = await fetch('/api/reports/summary');
         const data = await response.json();
-
-        // This built-in JS tool formats raw numbers into perfect Philippine Pesos!
-        const currencyFormatter = new Intl.NumberFormat('en-PH', { 
-            style: 'currency', 
-            currency: 'PHP' 
-        });
-
-        // Update the HTML text with the real numbers from your backend
+        const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
         document.getElementById('totalSalesText').innerText = currencyFormatter.format(data.total_sales || 0);
         document.getElementById('netProfitText').innerText = currencyFormatter.format(data.net_amount || 0);
-        
-    } catch (error) {
-        console.error("Error loading financial summary:", error);
-    }
+    } catch (error) { console.error("Error loading financial summary:", error); }
 }
 
-// Call this when the page first loads
-loadDashboardSummary();
-
 // ==========================================
-// 7. FETCH DAILY REPORTS (Sales & Purchases Tab)
+// 7. DAILY REPORTS (Sales Tab)
 // ==========================================
 async function loadDailyReports() {
     try {
         const response = await fetch('/api/reports/daily');
         const dailyData = await response.json();
-
         const tableBody = document.getElementById('dailyReportTableBody');
-        tableBody.innerHTML = ''; // Clear table before loading
-
+        tableBody.innerHTML = ''; 
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
 
         for (const day of dailyData) {
-            // Determine if profit is positive (green) or negative (red)
             let profitColor = day.gross_profit >= 0 ? 'text-success' : 'text-danger';
-
             const row = `
                 <tr>
                     <td class="fw-bold">${day.report_date}</td>
@@ -269,9 +211,7 @@ async function loadDailyReports() {
             `;
             tableBody.innerHTML += row;
         }
-    } catch (error) {
-        console.error("Error loading daily reports:", error);
-    }
+    } catch (error) { console.error("Error loading daily reports:", error); }
 }
 
 // ==========================================
@@ -281,10 +221,8 @@ async function loadExpenses() {
     try {
         const response = await fetch('/api/expenses');
         const expenses = await response.json();
-        
         const tableBody = document.getElementById('expenseTableBody');
         tableBody.innerHTML = ''; 
-
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
 
         for (const exp of expenses) {
@@ -297,9 +235,7 @@ async function loadExpenses() {
             `;
             tableBody.innerHTML += row;
         }
-    } catch (error) {
-        console.error("Error loading expenses:", error);
-    }
+    } catch (error) { console.error("Error loading expenses:", error); }
 }
 
 document.getElementById('saveExpenseBtn').addEventListener('click', async () => {
@@ -308,10 +244,7 @@ document.getElementById('saveExpenseBtn').addEventListener('click', async () => 
         amount: parseFloat(document.getElementById('expenseAmountInput').value)
     };
 
-    if (!expenseData.description || !expenseData.amount) {
-        alert("Please enter a description and an amount.");
-        return;
-    }
+    if (!expenseData.description || !expenseData.amount) return alert("Please enter a description and amount.");
 
     try {
         const response = await fetch('/api/expenses', {
@@ -321,16 +254,76 @@ document.getElementById('saveExpenseBtn').addEventListener('click', async () => 
         });
 
         if (response.ok) {
-            // Hide modal and clear inputs
             bootstrap.Modal.getInstance(document.getElementById('expenseModal')).hide();
             document.getElementById('expenseDescInput').value = '';
             document.getElementById('expenseAmountInput').value = '';
-            
-            // Reload table and update dashboard math
             loadExpenses();
             loadDashboardSummary();
         }
-    } catch (error) {
-        console.error("Error saving expense:", error);
-    }
+    } catch (error) { console.error("Error saving expense:", error); }
 });
+
+// ==========================================
+// 9. ACCOUNTS RECEIVABLE LOGIC
+// ==========================================
+async function loadAR() {
+    try {
+        const response = await fetch('/api/ar');
+        const debts = await response.json();
+        const tableBody = document.getElementById('arTableBody');
+        tableBody.innerHTML = ''; 
+        const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
+        for (const debt of debts) {
+            const row = `
+                <tr>
+                    <td>${debt.date_issued}</td>
+                    <td class="fw-bold">${debt.customer_name}</td>
+                    <td class="text-muted">${debt.description}</td>
+                    <td class="text-warning fw-bold">${currencyFormatter.format(debt.amount)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success" onclick="markDebtPaid(${debt.id})">
+                            Mark as Paid
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        }
+    } catch (error) { console.error("Error loading AR:", error); }
+}
+
+document.getElementById('saveArBtn').addEventListener('click', async () => {
+    const debtData = {
+        customer_name: document.getElementById('arNameInput').value,
+        description: document.getElementById('arDescInput').value,
+        amount: parseFloat(document.getElementById('arAmountInput').value)
+    };
+
+    if (!debtData.customer_name || !debtData.amount) return alert("Name and amount are required.");
+
+    try {
+        const response = await fetch('/api/ar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(debtData)
+        });
+
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('arModal')).hide();
+            document.getElementById('arNameInput').value = '';
+            document.getElementById('arDescInput').value = '';
+            document.getElementById('arAmountInput').value = '';
+            loadAR();
+        }
+    } catch (error) { console.error("Error saving debt:", error); }
+});
+
+async function markDebtPaid(id) {
+    if(!confirm("Are you sure this customer has fully paid this amount?")) return;
+
+    try {
+        const response = await fetch(`/api/ar/${id}/pay`, { method: 'PUT' });
+        if (response.ok) loadAR(); 
+    } catch (error) { console.error("Error marking debt as paid:", error); }
+}

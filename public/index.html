@@ -21,6 +21,7 @@
                 <li><a href="#" id="nav-inventory" class="nav-link text-dark">Inventory</a></li>
                 <li><a href="#" id="nav-sales" class="nav-link text-dark">Sales & Purchases</a></li>
                 <li><a href="#" id="nav-expenses" class="nav-link text-dark">Operating Expenses</a></li>
+                <li><a href="#" id="nav-ar" class="nav-link text-dark">Accounts Receivable</a></li>
             </ul>
         </div>
 
@@ -39,6 +40,7 @@
                 </div>
             </nav>
 
+            <!-- VIEW 1: DASHBOARD -->
             <div id="view-dashboard">
                 <div class="row mb-4">
                     <div class="col-md-4">
@@ -68,6 +70,7 @@
                 </div>
             </div>
 
+            <!-- VIEW 2: INVENTORY -->
             <div id="view-inventory" class="d-none">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="fw-bold m-0">Product Management</h4>
@@ -90,12 +93,14 @@
                                 </tr>
                             </thead>
                             <tbody id="productTableBody">
-                                </tbody>
+                                <!-- JS inserts products here -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
+            <!-- VIEW 3: SALES & PURCHASES -->
             <div id="view-sales" class="d-none">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="fw-bold m-0">Daily Sales & Profit Report</h4>
@@ -117,12 +122,14 @@
                                 </tr>
                             </thead>
                             <tbody id="dailyReportTableBody">
-                                </tbody>
+                                <!-- JavaScript will inject the Phase 5 daily math here -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
+            <!-- VIEW 4: EXPENSES -->
             <div id="view-expenses" class="d-none">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="fw-bold m-0">Operating Expenses</h4>
@@ -142,13 +149,52 @@
                                 </tr>
                             </thead>
                             <tbody id="expenseTableBody">
-                                </tbody>
+                                <!-- JS inserts expenses here -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-        </div> </div> <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
+            <!-- VIEW 5: ACCOUNTS RECEIVABLE -->
+            <div id="view-ar" class="d-none">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold m-0">Accounts Receivable (Unpaid)</h4>
+                    <button class="btn btn-warning shadow-sm" data-bs-toggle="modal" data-bs-target="#arModal">
+                        + Log Customer Debt
+                    </button>
+                </div>
+                
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <table class="table table-hover table-striped mb-0 text-center">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Customer Name</th>
+                                    <th>Items Taken (Desc)</th>
+                                    <th>Amount Owed</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="arTableBody">
+                                <!-- JS inserts unpaid debts here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End Main Content -->
+    </div> <!-- End d-flex wrapper -->
+
+
+    <!-- ========================================== -->
+    <!-- MODALS SECTION                             -->
+    <!-- ========================================== -->
+
+    <!-- ADD PRODUCT MODAL -->
+    <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -185,6 +231,7 @@
         </div>
     </div>
 
+    <!-- TRANSACTION MODAL -->
     <div class="modal fade" id="transactionModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -192,11 +239,9 @@
                     <h5 class="modal-title fw-bold">Record Transaction</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                
                 <div class="modal-body">
                     <h6 id="transactionItemName" class="text-primary mb-3"></h6>
                     <input type="hidden" id="transactionItemCode">
-                    
                     <div class="mb-3">
                         <label class="form-label text-muted small">Transaction Type</label>
                         <select class="form-select" id="transactionType">
@@ -208,7 +253,6 @@
                         <label class="form-label text-muted small">Quantity</label>
                         <input type="number" class="form-control" id="transactionQuantity" min="1" value="1">
                     </div>
-
                     <div id="purchaseFields" class="d-none bg-light p-3 rounded border">
                         <div class="mb-3">
                             <label class="form-label text-muted small">Supplier Name</label>
@@ -220,16 +264,15 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="modal-footer justify-content-between">
                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-success px-4" id="saveTransactionBtn">Confirm</button>
                 </div>
-                
             </div>
         </div>
     </div>
 
+    <!-- EXPENSE MODAL -->
     <div class="modal fade" id="expenseModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -250,6 +293,36 @@
                 <div class="modal-footer justify-content-between">
                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-danger px-4" id="saveExpenseBtn">Save Expense</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACCOUNTS RECEIVABLE MODAL -->
+    <div class="modal fade" id="arModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title fw-bold">Log Customer Debt</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Customer Name</label>
+                        <input type="text" class="form-control" id="arNameInput" placeholder="e.g., Engr. Santos">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Description of Items</label>
+                        <input type="text" class="form-control" id="arDescInput" placeholder="e.g., 50 bags Apo Cement">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Amount Owed (₱)</label>
+                        <input type="number" step="0.01" class="form-control" id="arAmountInput">
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning px-4" id="saveArBtn">Save Debt</button>
                 </div>
             </div>
         </div>
