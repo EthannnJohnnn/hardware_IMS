@@ -1,20 +1,174 @@
 /* public/css/style.css */
-body {
-    background-color: #f8f9fa; /* A very light grey, easy on the eyes */
-    overflow-x: hidden;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ========================================== */
+/* 1. CUSTOM COLOR PALETTE                    */
+/* ========================================== */
+:root {
+    --primary-color: #4f46e5; /* Modern deep Indigo */
+    --primary-hover: #4338ca;
+    --bg-color: #f8fafc; /* Crisp slate-tinted white */
+    --nav-faded: #eef2ff; /* Faded indigo for the navbar */
+    --text-main: #334155; /* Slate grey (softer than pure black) */
+    --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
 }
 
-/* Force the sidebar to be exactly the height of the browser window */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+}
+
+#main-content {
+    flex-grow: 1;
+    padding: 30px;
+    background-color: var(--bg-color);
+    min-height: 100vh;
+}
+
+/* ========================================== */
+/* 2. THE SIDEBAR                             */
+/* ========================================== */
 #sidebar {
     min-height: 100vh;
-    min-width: 250px;
-    max-width: 250px;
-    background-color: #ffffff;
-    border-right: 1px solid #e0e0e0;
+    /* This creates that modern, faded slate-gray gradient */
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    border-right: 1px solid #cbd5e1;
+    width: 280px; /* Slightly wider to fit the icons comfortably */
 }
 
-/* Add a little space around our main dashboard content */
-#main-content {
-    width: 100%;
-    padding: 20px;
+#sidebar h4 {
+    color: var(--primary-color) !important;
+    letter-spacing: -0.5px;
+}
+
+.nav-pills .nav-link {
+    border-radius: 10px; /* Softer, rounder edges */
+    font-weight: 500;
+    color: #64748b !important;
+    transition: all 0.3s ease;
+    padding: 12px 18px;
+}
+
+/* Smooth animation for the icons when you hover */
+.nav-pills .nav-link i {
+    transition: transform 0.2s ease;
+}
+
+/* Hover State: Turns pure white to pop off the gray background */
+.nav-pills .nav-link:hover {
+    background-color: #ffffff;
+    color: var(--primary-color) !important;
+    transform: translateX(4px); 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.nav-pills .nav-link:hover i {
+    transform: scale(1.15); /* Icon grows slightly */
+}
+
+/* Active State: Solid Indigo Pop */
+.nav-pills .nav-link.active {
+    background-color: var(--primary-color) !important; 
+    color: #ffffff !important; 
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.nav-pills .nav-link.active i {
+    color: #ffffff !important;
+}
+
+/* ========================================== */
+/* 3. THE NAVBAR (FADED COLOR)                */
+/* ========================================== */
+.navbar {
+    /* Beautiful faded gradient from Indigo to White */
+    background: linear-gradient(120deg, var(--nav-faded) 0%, #ffffff 100%) !important;
+    border: 1px solid #e0e7ff;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02) !important;
+}
+
+.navbar-brand {
+    color: var(--primary-color) !important;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+/* ========================================== */
+/* 4. CARDS & SHADOWS                         */
+/* ========================================== */
+.card {
+    border-radius: 16px !important;
+    background: #ffffff;
+    border: 1px solid #f1f5f9 !important;
+    box-shadow: var(--card-shadow) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px); 
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01) !important;
+}
+
+/* ========================================== */
+/* 5. OVERRIDING BOOTSTRAP BUTTONS            */
+/* ========================================== */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    letter-spacing: 0.3px;
+    padding: 8px 16px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+/* ========================================== */
+/* 6. TABLES                                  */
+/* ========================================== */
+.table {
+    vertical-align: middle;
+    color: var(--text-main);
+}
+
+.table thead th {
+    border-bottom: 2px solid #e2e8f0;
+    color: #475569;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.8px;
+    padding: 16px;
+    background-color: #f8fafc; /* Cool slate background for headers */
+}
+
+.table-hover tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+/* ========================================== */
+/* 7. PILL BADGES                             */
+/* ========================================== */
+.badge {
+    padding: 0.55em 0.9em;
+    border-radius: 30px; 
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.3px;
 }

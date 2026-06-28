@@ -20,14 +20,14 @@ async function loadProducts() {
 
             const row = `
                 <tr>
-                    <td>${product.item_code}</td>
-                    <td>${product.item_name}</td>
+                    <td class="fw-bold text-muted">${product.item_code}</td>
+                    <td class="fw-bold">${product.item_name}</td>
                     <td>₱${product.cost_price.toFixed(2)}</td>
                     <td>₱${product.srp.toFixed(2)}</td>
                     <td><span class="badge ${stockBadge}">${product.current_stock}</span></td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" 
-                            onclick="openTransactionModal('${product.item_code}', '${product.item_name}')">
+                        <button class="btn btn-sm btn-outline-primary fw-bold" 
+                            onclick="openTransactionModal('${product.item_code}', '${product.item_name}', ${product.current_stock})">
                             Transact
                         </button>
                     </td>
@@ -66,14 +66,19 @@ document.getElementById('saveProductBtn').addEventListener('click', async () => 
 });
 
 // ==========================================
-// 3. TRANSACTION LOGIC (SALES/PURCHASES)
+// 3. TRANSACTION LOGIC & VALIDATION
 // ==========================================
 let currentTransactionModal; 
 
-function openTransactionModal(itemCode, itemName) {
+function openTransactionModal(itemCode, itemName, currentStock) {
     document.getElementById('transactionItemCode').value = itemCode;
-    document.getElementById('transactionItemName').innerText = `Item: ${itemName}`;
+    // Show current stock in the modal header
+    document.getElementById('transactionItemName').innerText = `Item: ${itemName} (In Stock: ${currentStock})`;
     document.getElementById('transactionQuantity').value = 1;
+    
+    // Store the limit invisibly for validation
+    document.getElementById('transactionQuantity').dataset.stockLimit = currentStock;
+
     currentTransactionModal = new bootstrap.Modal(document.getElementById('transactionModal'));
     currentTransactionModal.show();
 }
@@ -91,6 +96,18 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
     const itemCode = document.getElementById('transactionItemCode').value;
     const type = document.getElementById('transactionType').value;
     const quantity = parseInt(document.getElementById('transactionQuantity').value);
+
+    // --- SAFETY VALIDATION ---
+    if (isNaN(quantity) || quantity <= 0) {
+        return alert("Please enter a valid number greater than 0.");
+    }
+    if (type === 'sale') {
+        const stockLimit = parseInt(document.getElementById('transactionQuantity').dataset.stockLimit);
+        if (quantity > stockLimit) {
+            return alert(`🛑 Error: You cannot sell ${quantity} items. You only have ${stockLimit} in stock!`);
+        }
+    }
+    // -------------------------
 
     const transactionData = { item_code: itemCode, quantity: quantity };
 
@@ -117,39 +134,30 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
             document.getElementById('purchaseFields').classList.add('d-none');
             
             loadProducts();         
-            loadDashboardSummary(); 
+            loadDashboardSummary();
+            loadDashboardChart(); // Refresh chart when money moves!
         } else { alert("Transaction failed. Check server console."); }
     } catch (error) { console.error("Error processing transaction:", error); }
 });
 
 // ==========================================
-// 4. INITIALIZE DASHBOARD
-// ==========================================
-loadProducts();
-loadDashboardSummary();
-
-// ==========================================
-// 5. SIDEBAR NAVIGATION LOGIC (Single Page App)
+// 4. SIDEBAR NAVIGATION LOGIC (SPA)
 // ==========================================
 function switchView(viewId, linkId, titleText) {
-    // Hide ALL 5 views
     document.getElementById('view-dashboard').classList.add('d-none');
     document.getElementById('view-inventory').classList.add('d-none');
     document.getElementById('view-sales').classList.add('d-none'); 
     document.getElementById('view-expenses').classList.add('d-none');
     document.getElementById('view-ar').classList.add('d-none'); 
     
-    // Show requested view
     document.getElementById(viewId).classList.remove('d-none');
     
-    // Reset ALL 5 links
     document.getElementById('nav-dashboard').className = 'nav-link text-dark';
     document.getElementById('nav-inventory').className = 'nav-link text-dark';
     document.getElementById('nav-sales').className = 'nav-link text-dark';    
     document.getElementById('nav-expenses').className = 'nav-link text-dark'; 
     document.getElementById('nav-ar').className = 'nav-link text-dark'; 
     
-    // Highlight clicked link
     document.getElementById(linkId).className = 'nav-link active';
     document.getElementById('pageTitle').innerText = titleText;
 }
@@ -157,6 +165,7 @@ function switchView(viewId, linkId, titleText) {
 document.getElementById('nav-dashboard').addEventListener('click', () => {
     switchView('view-dashboard', 'nav-dashboard', 'Dashboard Overview');
     loadDashboardSummary(); 
+    loadDashboardCharts();
 });
 document.getElementById('nav-inventory').addEventListener('click', () => {
     switchView('view-inventory', 'nav-inventory', 'Inventory Management');
@@ -175,7 +184,7 @@ document.getElementById('nav-ar').addEventListener('click', () => {
 });
 
 // ==========================================
-// 6. DASHBOARD FINANCIAL SUMMARY
+// 5. FINANCIAL MATH & CHART.JS
 // ==========================================
 async function loadDashboardSummary() {
     try {
@@ -187,8 +196,125 @@ async function loadDashboardSummary() {
     } catch (error) { console.error("Error loading financial summary:", error); }
 }
 
+// Global variables to hold our 3 charts
+let salesChart = null;
+let purchaseChart = null;
+let expenseChart = null;
+
+async function loadDashboardCharts(days = 7) {
+    try {
+        // 1. Fetch Data
+        const reportRes = await fetch('/api/reports/daily');
+        const dailyData = await reportRes.json();
+        
+        const expenseRes = await fetch('/api/expenses');
+        const expenseData = await expenseRes.json();
+
+        // 2. Process Daily Sales & Costs
+        const filteredData = dailyData.slice(0, days).reverse(); 
+        const labels = filteredData.map(day => day.report_date);
+        const revenues = filteredData.map(day => day.total_revenue);
+        const cogs = filteredData.map(day => day.total_cogs);
+
+        // 3. Process Expenses for the Pie Chart (Group by Description)
+        const expenseTotals = {};
+        expenseData.forEach(exp => {
+            // Group identical expenses together (e.g., all "Payroll" gets added together)
+            if (!expenseTotals[exp.description]) expenseTotals[exp.description] = 0;
+            expenseTotals[exp.description] += exp.amount;
+        });
+        const expLabels = Object.keys(expenseTotals);
+        const expAmounts = Object.values(expenseTotals);
+
+        // --- DESTROY OLD CHARTS TO PREVENT BUGS ---
+        if (salesChart) salesChart.destroy();
+        if (purchaseChart) purchaseChart.destroy();
+        if (expenseChart) expenseChart.destroy();
+
+        // --- CHART 1: MAIN SALES (BAR CHART) ---
+        const ctxSales = document.getElementById('salesChart').getContext('2d');
+        salesChart = new Chart(ctxSales, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Revenue (₱)',
+                    data: revenues,
+                    backgroundColor: '#4f46e5', // Deep Indigo
+                    borderRadius: 4, // Rounded bars
+                    barThickness: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, // Fixes layout bugs
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' }, border: { dash: [4, 4] } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // --- CHART 2: PURCHASES / COGS (AREA CHART) ---
+        const ctxPurchases = document.getElementById('purchaseChart').getContext('2d');
+        purchaseChart = new Chart(ctxPurchases, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Item Costs (₱)',
+                    data: cogs,
+                    borderColor: '#8b5cf6', // Violet
+                    backgroundColor: 'rgba(139, 92, 246, 0.2)', // Faded Violet Fill
+                    fill: true,
+                    tension: 0.4, // Smooth curvy line
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    x: { display: false }, // Hides the bottom text for a clean look
+                    y: { display: false, beginAtZero: true } 
+                }
+            }
+        });
+
+        // --- CHART 3: EXPENSES (DOUGHNUT CHART) ---
+        const ctxExpense = document.getElementById('expenseChart').getContext('2d');
+        expenseChart = new Chart(ctxExpense, {
+            type: 'doughnut',
+            data: {
+                labels: expLabels.length > 0 ? expLabels : ['No Expenses'],
+                datasets: [{
+                    data: expAmounts.length > 0 ? expAmounts : [1],
+                    backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%', // Makes the ring thin and modern
+                plugins: {
+                    legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } }
+                }
+            }
+        });
+
+    } catch (error) { console.error("Error loading charts:", error); }
+}
+
+// Dropdown Listener
+document.getElementById('chartTimeframe').addEventListener('change', (event) => {
+    loadDashboardCharts(parseInt(event.target.value));
+});
+
 // ==========================================
-// 7. DAILY REPORTS (Sales Tab)
+// 6. OTHER DATA LOADERS
 // ==========================================
 async function loadDailyReports() {
     try {
@@ -204,8 +330,8 @@ async function loadDailyReports() {
                 <tr>
                     <td class="fw-bold">${day.report_date}</td>
                     <td>${day.items_sold}</td>
-                    <td>${currencyFormatter.format(day.total_revenue)}</td>
-                    <td>${currencyFormatter.format(day.total_cogs)}</td>
+                    <td class="text-muted">${currencyFormatter.format(day.total_revenue)}</td>
+                    <td class="text-muted">${currencyFormatter.format(day.total_cogs)}</td>
                     <td class="fw-bold ${profitColor}">${currencyFormatter.format(day.gross_profit)}</td>
                 </tr>
             `;
@@ -214,9 +340,6 @@ async function loadDailyReports() {
     } catch (error) { console.error("Error loading daily reports:", error); }
 }
 
-// ==========================================
-// 8. EXPENSES LOGIC
-// ==========================================
 async function loadExpenses() {
     try {
         const response = await fetch('/api/expenses');
@@ -228,8 +351,8 @@ async function loadExpenses() {
         for (const exp of expenses) {
             const row = `
                 <tr>
-                    <td>${exp.expense_date}</td>
-                    <td>${exp.description}</td>
+                    <td class="text-muted fw-bold">${exp.expense_date}</td>
+                    <td class="fw-bold">${exp.description}</td>
                     <td class="text-danger fw-bold">-${currencyFormatter.format(exp.amount)}</td>
                 </tr>
             `;
@@ -243,29 +366,21 @@ document.getElementById('saveExpenseBtn').addEventListener('click', async () => 
         description: document.getElementById('expenseDescInput').value,
         amount: parseFloat(document.getElementById('expenseAmountInput').value)
     };
-
     if (!expenseData.description || !expenseData.amount) return alert("Please enter a description and amount.");
 
     try {
-        const response = await fetch('/api/expenses', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(expenseData)
-        });
-
+        const response = await fetch('/api/expenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(expenseData) });
         if (response.ok) {
             bootstrap.Modal.getInstance(document.getElementById('expenseModal')).hide();
             document.getElementById('expenseDescInput').value = '';
             document.getElementById('expenseAmountInput').value = '';
             loadExpenses();
             loadDashboardSummary();
+            loadDashboardChart(); // Redraw chart to reflect the expense!
         }
     } catch (error) { console.error("Error saving expense:", error); }
 });
 
-// ==========================================
-// 9. ACCOUNTS RECEIVABLE LOGIC
-// ==========================================
 async function loadAR() {
     try {
         const response = await fetch('/api/ar');
@@ -277,13 +392,13 @@ async function loadAR() {
         for (const debt of debts) {
             const row = `
                 <tr>
-                    <td>${debt.date_issued}</td>
-                    <td class="fw-bold">${debt.customer_name}</td>
+                    <td class="text-muted fw-bold">${debt.date_issued}</td>
+                    <td class="fw-bold text-primary">${debt.customer_name}</td>
                     <td class="text-muted">${debt.description}</td>
                     <td class="text-warning fw-bold">${currencyFormatter.format(debt.amount)}</td>
                     <td>
-                        <button class="btn btn-sm btn-success" onclick="markDebtPaid(${debt.id})">
-                            Mark as Paid
+                        <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="markDebtPaid(${debt.id})">
+                            ✓ Mark as Paid
                         </button>
                     </td>
                 </tr>
@@ -299,16 +414,10 @@ document.getElementById('saveArBtn').addEventListener('click', async () => {
         description: document.getElementById('arDescInput').value,
         amount: parseFloat(document.getElementById('arAmountInput').value)
     };
-
     if (!debtData.customer_name || !debtData.amount) return alert("Name and amount are required.");
 
     try {
-        const response = await fetch('/api/ar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(debtData)
-        });
-
+        const response = await fetch('/api/ar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(debtData) });
         if (response.ok) {
             bootstrap.Modal.getInstance(document.getElementById('arModal')).hide();
             document.getElementById('arNameInput').value = '';
@@ -321,9 +430,13 @@ document.getElementById('saveArBtn').addEventListener('click', async () => {
 
 async function markDebtPaid(id) {
     if(!confirm("Are you sure this customer has fully paid this amount?")) return;
-
     try {
         const response = await fetch(`/api/ar/${id}/pay`, { method: 'PUT' });
         if (response.ok) loadAR(); 
     } catch (error) { console.error("Error marking debt as paid:", error); }
 }
+
+// Initialize on page load
+loadProducts();
+loadDashboardSummary();
+loadDashboardCharts();
