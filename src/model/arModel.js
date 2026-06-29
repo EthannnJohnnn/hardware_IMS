@@ -16,12 +16,14 @@ const ARModel = {
     },
 
     // 2. Fetch all unpaid debts to display on the dashboard
+    // 2. Fetch ALL debts to display on the dashboard (Paid & Unpaid)
     getUnpaidDebts: (callback) => {
-        const sql = `SELECT * FROM accounts_receivable WHERE status = 'Unpaid' ORDER BY date_issued DESC`;
+        // THE FIX: We removed the WHERE filter so it grabs every historical record
+        const sql = `SELECT * FROM accounts_receivable ORDER BY date_issued DESC`;
         
         db.all(sql, [], (err, rows) => {
             if (err) {
-                console.error("Error fetching unpaid debts:", err);
+                console.error("Error fetching debts:", err);
                 return callback(err, null);
             }
             return callback(null, rows);

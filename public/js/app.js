@@ -203,52 +203,60 @@ let expenseChart = null;
 
 async function loadDashboardCharts(days = 7) {
     try {
-        // 1. Fetch Data
         const reportRes = await fetch('/api/reports/daily');
         const dailyData = await reportRes.json();
         
         const expenseRes = await fetch('/api/expenses');
         const expenseData = await expenseRes.json();
 
-        // 2. Process Daily Sales & Costs
+        // Data Formatters
+        const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
         const filteredData = dailyData.slice(0, days).reverse(); 
         const labels = filteredData.map(day => day.report_date);
         const revenues = filteredData.map(day => day.total_revenue);
         const cogs = filteredData.map(day => day.total_cogs);
 
-        // 3. Process Expenses for the Pie Chart (Group by Description)
+        // 1. Calculate & Display Total COGS
+        const totalCogsValue = cogs.reduce((sum, val) => sum + val, 0);
+        document.getElementById('totalCogsText').innerText = currencyFormatter.format(totalCogsValue);
+
         const expenseTotals = {};
         expenseData.forEach(exp => {
-            // Group identical expenses together (e.g., all "Payroll" gets added together)
             if (!expenseTotals[exp.description]) expenseTotals[exp.description] = 0;
             expenseTotals[exp.description] += exp.amount;
         });
         const expLabels = Object.keys(expenseTotals);
         const expAmounts = Object.values(expenseTotals);
 
-        // --- DESTROY OLD CHARTS TO PREVENT BUGS ---
+        // 2. Calculate Total Expenses (For the new plugin)
+        const totalExpenseValue = expAmounts.reduce((sum, val) => sum + val, 0);
+        const formattedExpenseTotal = currencyFormatter.format(totalExpenseValue);
+
         if (salesChart) salesChart.destroy();
         if (purchaseChart) purchaseChart.destroy();
         if (expenseChart) expenseChart.destroy();
 
-        // --- CHART 1: MAIN SALES (BAR CHART) ---
+        // --- CHART 1: MAIN SALES ---
         const ctxSales = document.getElementById('salesChart').getContext('2d');
         salesChart = new Chart(ctxSales, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Total Revenue (₱)',
+                    label: 'Revenue',
                     data: revenues,
-                    backgroundColor: '#4f46e5', // Deep Indigo
-                    borderRadius: 4, // Rounded bars
+                    backgroundColor: '#4f46e5',
+                    borderRadius: 4,
                     barThickness: 20
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false, // Fixes layout bugs
-                plugins: { legend: { display: false } },
+                responsive: true, maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (context) => currencyFormatter.format(context.raw) } }
+                },
                 scales: { 
                     y: { beginAtZero: true, grid: { color: '#f1f5f9' }, border: { dash: [4, 4] } },
                     x: { grid: { display: false } }
@@ -256,35 +264,69 @@ async function loadDashboardCharts(days = 7) {
             }
         });
 
-        // --- CHART 2: PURCHASES / COGS (AREA CHART) ---
+        // --- CHART 2: PURCHASES / COGS ---
         const ctxPurchases = document.getElementById('purchaseChart').getContext('2d');
+        const gradient = ctxPurchases.createLinearGradient(0, 0, 0, 100);
+        gradient.addColorStop(0, 'rgba(139, 92, 246, 0.4)'); 
+        gradient.addColorStop(1, 'rgba(139, 92, 246, 0.0)'); 
+
         purchaseChart = new Chart(ctxPurchases, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Item Costs (₱)',
+                    label: 'Cost of Goods',
                     data: cogs,
-                    borderColor: '#8b5cf6', // Violet
-                    backgroundColor: 'rgba(139, 92, 246, 0.2)', // Faded Violet Fill
+                    borderColor: '#8b5cf6', 
+                    backgroundColor: gradient, 
                     fill: true,
-                    tension: 0.4, // Smooth curvy line
-                    pointRadius: 0
+                    tension: 0.4, 
+                    pointRadius: 3, 
+                    pointBackgroundColor: '#ffffff',
+                    borderWidth: 2
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { 
-                    x: { display: false }, // Hides the bottom text for a clean look
-                    y: { display: false, beginAtZero: true } 
-                }
+                responsive: true, maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (context) => currencyFormatter.format(context.raw) } }
+                },
+                scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
+                interaction: { mode: 'index', intersect: false } 
             }
         });
 
-        // --- CHART 3: EXPENSES (DOUGHNUT CHART) ---
+        // --- CHART 3: EXPENSES (FIXED WITH CUSTOM PLUGIN) ---
         const ctxExpense = document.getElementById('expenseChart').getContext('2d');
+        
+        // ✨ THE FIX: This paints the text mathematically centered inside the doughnut
+        const centerTextPlugin = {
+            id: 'centerText',
+            beforeDraw: function(chart) {
+                const { ctx, chartArea: { left, top, width, height } } = chart;
+                ctx.save();
+                
+                // Find the exact center of the drawn chart area
+                const centerX = left + width / 2;
+                const centerY = top + height / 2;
+                
+                // Draw the Amount
+                ctx.font = 'bold 15px Inter, sans-serif';
+                ctx.fillStyle = '#334155';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(formattedExpenseTotal, centerX, centerY - 6);
+                
+                // Draw the 'Total' label
+                ctx.font = '11px Inter, sans-serif';
+                ctx.fillStyle = '#64748b';
+                ctx.fillText('Total', centerX, centerY + 12);
+                
+                ctx.restore();
+            }
+        };
+
         expenseChart = new Chart(ctxExpense, {
             type: 'doughnut',
             data: {
@@ -292,15 +334,17 @@ async function loadDashboardCharts(days = 7) {
                 datasets: [{
                     data: expAmounts.length > 0 ? expAmounts : [1],
                     backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'],
-                    borderWidth: 0
+                    borderWidth: 0,
+                    hoverOffset: 4
                 }]
             },
+            plugins: [centerTextPlugin], // Inject the plugin right here
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '75%', // Makes the ring thin and modern
+                responsive: true, maintainAspectRatio: false,
+                cutout: '80%', 
                 plugins: {
-                    legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } }
+                    legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } },
+                    tooltip: { callbacks: { label: (context) => ` ${context.label}: ${currencyFormatter.format(context.raw)}` } }
                 }
             }
         });
@@ -390,17 +434,31 @@ async function loadAR() {
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
 
         for (const debt of debts) {
+            // 1. Check if the backend marked this as paid
+            // THE FIX: Converts whatever the database sends into lowercase just to be safe!
+            const isPaid = debt.status.toLowerCase() === 'paid';
+
+            // 2. Create dynamic UI elements based on the status
+            const statusBadge = isPaid 
+                ? `<span class="badge bg-success shadow-sm">Paid</span>` 
+                : `<span class="badge bg-warning text-dark shadow-sm">Unpaid</span>`;
+            
+            // If paid, show a checkmark. If unpaid, show the action button.
+            const actionButton = isPaid 
+                ? `<span class="text-success small fw-bold"><i class="bi bi-check-circle-fill"></i> Settled</span>`
+                : `<button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="markDebtPaid(${debt.id})">✓ Mark as Paid</button>`;
+
+            // Strike through the text if it's already paid
+            const amountClass = isPaid ? "text-muted text-decoration-line-through" : "text-warning fw-bold";
+
             const row = `
                 <tr>
-                    <td class="text-muted fw-bold">${debt.date_issued}</td>
+                    <td class="text-muted fw-bold">${debt.date_issued || debt.date}</td>
                     <td class="fw-bold text-primary">${debt.customer_name}</td>
                     <td class="text-muted">${debt.description}</td>
-                    <td class="text-warning fw-bold">${currencyFormatter.format(debt.amount)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="markDebtPaid(${debt.id})">
-                            ✓ Mark as Paid
-                        </button>
-                    </td>
+                    <td class="${amountClass}">${currencyFormatter.format(debt.amount)}</td>
+                    <td>${statusBadge}</td>
+                    <td>${actionButton}</td>
                 </tr>
             `;
             tableBody.innerHTML += row;
@@ -435,6 +493,37 @@ async function markDebtPaid(id) {
         if (response.ok) loadAR(); 
     } catch (error) { console.error("Error marking debt as paid:", error); }
 }
+
+// ==========================================
+// 7. REAL-TIME SEARCH LOGIC
+// ==========================================
+document.getElementById('searchInput').addEventListener('input', function(event) {
+    // 1. Get whatever the user typed and convert it to lowercase
+    const searchTerm = event.target.value.toLowerCase();
+    
+    // 2. Grab all the rows inside the Inventory table
+    const tableRows = document.querySelectorAll('#productTableBody tr');
+
+    // 3. Pro-Move: Automatically switch to the Inventory tab if they start typing!
+    const inventoryTabIsHidden = document.getElementById('view-inventory').classList.contains('d-none');
+    if (searchTerm.length > 0 && inventoryTabIsHidden) {
+        document.getElementById('nav-inventory').click(); 
+    }
+
+    // 4. Loop through every row and check if it matches
+    tableRows.forEach(row => {
+        // We want to search by Item Code (column 0) or Item Name (column 1)
+        const itemCode = row.cells[0].textContent.toLowerCase();
+        const itemName = row.cells[1].textContent.toLowerCase();
+
+        // If the search term is inside the code OR the name, show the row. Otherwise, hide it.
+        if (itemCode.includes(searchTerm) || itemName.includes(searchTerm)) {
+            row.style.display = ''; 
+        } else {
+            row.style.display = 'none'; 
+        }
+    });
+});
 
 // Initialize on page load
 loadProducts();
