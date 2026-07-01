@@ -2,12 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./src/config/database'); 
 
-// 1. Import all your clean routes
+// 1. Import all our clean routes
 const productRoutes = require('./src/routes/productRoute'); 
+const transactionRoutes = require('./src/routes/transactionRoute');
+const reportRoutes = require('./src/routes/reportRoute');
 const expenseRoutes = require('./src/routes/expenseRoute');
 const arRoutes = require('./src/routes/arRoute');
-const reportRoutes = require('./src/routes/reportRoute'); // <-- NEW
-const transactionRoutes = require('./src/routes/transactionRoute'); // <-- NEW
+const ledgerRoutes = require('./src/routes/ledgerRoute'); // <-- NEW LEDGER ROUTE
 
 const app = express();
 const PORT = 3000;
@@ -16,12 +17,13 @@ app.use(cors());
 app.use(express.json()); 
 app.use(express.static('public'));
 
-// 2. Register the routes (The Traffic Cops)
+// 2. Register the routes
+app.use('/api', productRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/reports', reportRoutes);
 app.use('/api/expenses', expenseRoutes);
-app.use('/api/ar', arRoutes);
-app.use('/api/reports', reportRoutes); // <-- THIS FIXES THE CHARTS!
-app.use('/api/transactions', transactionRoutes); // <-- Connects your sales/purchases
-app.use('/api', productRoutes); 
+app.use('/api/ar', arRoutes); 
+app.use('/api/ledger', ledgerRoutes); // <-- WIRE IT UP HERE
 
 app.listen(PORT, () => {
     console.log(`🚀 Server is running live on http://localhost:${PORT}`);

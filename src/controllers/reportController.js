@@ -1,3 +1,4 @@
+// src/controllers/reportController.js
 const ReportModel = require('../model/reportModel');
 
 const reportController = {
@@ -14,6 +15,15 @@ const reportController = {
         const endDate = req.query.end || '2099-12-31';
         ReportModel.getDailySalesReport(startDate, endDate, (err, data) => {
             if (err) return res.status(500).json({ error: "Failed to generate daily report" });
+            res.json(data);
+        });
+    },
+    
+    // ✨ NEW STEP 2: Process the type (daily or monthly) from the URL
+    getPurchasesAggregation: (req, res) => {
+        const type = req.query.type || 'daily'; // Default to daily if not provided
+        ReportModel.getAggregatedPurchases(type, (err, data) => {
+            if (err) return res.status(500).json({ error: "Failed to aggregate purchases" });
             res.json(data);
         });
     }

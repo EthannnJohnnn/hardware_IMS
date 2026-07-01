@@ -14,11 +14,19 @@
 
     <div class="d-flex">
 
-        <div id="sidebar" class="d-flex flex-column p-4 shadow-sm">
-            <h4 class="fw-bold mb-5 text-primary d-flex align-items-center gap-2">
-                <i class="bi bi-tools fs-3"></i> MaxC
-            </h4>
-            <ul class="nav nav-pills flex-column mb-auto gap-2">
+        <div id="sidebar" class="d-flex flex-column shadow-sm">
+
+            <div class="sidebar-brand d-flex align-items-center gap-3 mb-5">
+                <div class="brand-icon-wrap">
+                    <i class="bi bi-tools"></i>
+                </div>
+                <div>
+                    <h4>MaxC</h4>
+                    <small>Inventory System</small>
+                </div>
+            </div>
+
+            <ul class="nav nav-pills flex-column mb-auto gap-2" id="sidebarNav">
                 <li class="nav-item">
                     <a href="#" id="nav-dashboard" class="nav-link active d-flex align-items-center gap-3">
                         <i class="bi bi-grid-1x2-fill fs-5"></i> Dashboard
@@ -26,22 +34,32 @@
                 </li>
                 <li>
                     <a href="#" id="nav-inventory" class="nav-link text-dark d-flex align-items-center gap-3">
-                        <i class="bi bi-box-seam fs-5"></i> Inventory
+                        <i class="bi bi-box-seam fs-5 text-info"></i> Inventory
                     </a>
                 </li>
                 <li>
-                    <a href="#" id="nav-sales" class="nav-link text-dark d-flex align-items-center gap-3">
-                        <i class="bi bi-cart-check fs-5"></i> Sales & Purchases
+                    <a href="#" id="nav-sales-ledger" class="nav-link text-dark d-flex align-items-center gap-3">
+                        <i class="bi bi-graph-up-arrow fs-5 text-success"></i> Sales Ledger
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="nav-purchase-ledger" class="nav-link text-dark d-flex align-items-center gap-3">
+                        <i class="bi bi-box-arrow-in-down fs-5 text-primary"></i> Purchase Ledger
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="nav-master-reports" class="nav-link text-dark d-flex align-items-center gap-3">
+                        <i class="bi bi-file-earmark-bar-graph fs-5 text-warning"></i> Master Reports
                     </a>
                 </li>
                 <li>
                     <a href="#" id="nav-expenses" class="nav-link text-dark d-flex align-items-center gap-3">
-                        <i class="bi bi-receipt fs-5"></i> Operating Expenses
+                        <i class="bi bi-receipt fs-5 text-danger"></i> Operating Expenses
                     </a>
                 </li>
                 <li>
                     <a href="#" id="nav-ar" class="nav-link text-dark d-flex align-items-center gap-3">
-                        <i class="bi bi-wallet2 fs-5"></i> Accounts Receivable
+                        <i class="bi bi-wallet2 fs-5 text-secondary"></i> Accounts Receivable
                     </a>
                 </li>
             </ul>
@@ -57,9 +75,15 @@
                         <input id="searchInput" class="form-control me-2 bg-light border-0 shadow-sm" type="search" placeholder="Search inventory..." aria-label="Search">
                     </form>
                     
-                    <div class="d-flex align-items-center">
-                        <span class="me-3">🔔</span>
-                        <strong>Admin User</strong>
+                    <div class="navbar-user">
+                        <div class="notif-bell">
+                            <i class="bi bi-bell"></i>
+                        </div>
+                        <div class="avatar">AU</div>
+                        <div>
+                            <div class="user-name">Admin User</div>
+                            <div class="user-role">Administrator</div>
+                        </div>
                     </div>
                 </div>
             </nav>
@@ -161,24 +185,113 @@
                 </div>
             </div>
 
-            <div id="view-sales" class="d-none">
+            <div id="view-sales-ledger" class="d-none">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="fw-bold m-0 text-primary">Daily Sales & Profit Report</h4>
-                    <button class="btn btn-outline-secondary btn-sm shadow-sm">Export to Excel</button>
+                    <h4 class="fw-bold m-0 text-primary">Sales Ledger</h4>
                 </div>
                 <div class="card shadow-sm border-0">
-                    <div class="card-body p-0">
+                    <div class="card-body p-0 table-responsive">
                         <table class="table table-hover mb-0 text-center">
                             <thead>
                                 <tr>
                                     <th>Date</th>
-                                    <th>Items Sold</th>
-                                    <th>Revenue (Sales)</th>
-                                    <th>COGS (Item Costs)</th>
-                                    <th>Gross Profit</th>
+                                    <th>Item Code</th>
+                                    <th class="text-start">Item Name</th>
+                                    <th>Unit Price (SRP)</th>
+                                    <th>Qty Sold</th>
+                                    <th>Total Sales</th>
                                 </tr>
                             </thead>
-                            <tbody id="dailyReportTableBody"></tbody>
+                            <tbody id="salesLedgerTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-purchase-ledger" class="d-none">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold m-0 text-primary">Purchase Ledger</h4>
+                </div>
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0 table-responsive">
+                        <table class="table table-hover mb-0 text-center">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Item Code</th>
+                                    <th class="text-start">Item Name</th>
+                                    <th>Cost Price</th>
+                                    <th>Qty Purchased</th>
+                                    <th>Total Cost</th>
+                                    <th>Supplier</th>
+                                </tr>
+                            </thead>
+                            <tbody id="purchaseLedgerTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="view-master-reports" class="d-none">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold m-0 text-primary">Master Financial Reports</h4>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                        <h5 class="m-0 fw-bold text-dark">Purchase Aggregation (COGS)</h5>
+                        <select id="purchaseAggToggle" class="form-select form-select-sm w-auto shadow-sm fw-bold">
+                            <option value="daily">Daily View</option>
+                            <option value="monthly">Monthly View</option>
+                        </select>
+                    </div>
+                    <div class="card-body p-0 table-responsive">
+                        <table class="table table-hover mb-0 text-center">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date / Period</th>
+                                    <th>Total Money Spent</th>
+                                </tr>
+                            </thead>
+                            <tbody id="purchaseAggTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm border-0 mb-4 border-top border-primary border-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                        <h5 class="m-0 fw-bold text-dark"><i class="bi bi-file-spreadsheet text-success me-2"></i>Executive Summary Report</h5>
+                        
+                        <div class="d-flex gap-2">
+                            <input type="date" id="reportStartDate" class="form-control form-control-sm shadow-sm bg-light">
+                            <span class="align-self-center text-muted fw-bold">to</span>
+                            <input type="date" id="reportEndDate" class="form-control form-control-sm shadow-sm bg-light">
+                            <button id="generateReportBtn" class="btn btn-sm btn-primary shadow-sm fw-bold px-3">Generate</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-0 table-responsive">
+                        <table class="table table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="w-50 text-muted" style="letter-spacing: 1px;">DESCRIPTION</th>
+                                    <th class="w-50 text-muted" style="letter-spacing: 1px;">AMOUNT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="fw-bold text-muted">REPORT START DATE</td><td id="execStartDate" class="fw-bold">--</td></tr>
+                                <tr><td class="fw-bold text-muted">REPORT END DATE</td><td id="execEndDate" class="fw-bold">--</td></tr>
+                                <tr><td class="fw-bold">TOTAL SALES</td><td id="execTotalSales" class="text-success fw-bold">₱0.00</td></tr>
+                                <tr><td class="fw-bold">TOTAL PURCHASES (COGS)</td><td id="execTotalPurchases" class="text-danger fw-bold">₱0.00</td></tr>
+                                <tr><td class="fw-bold">TOTAL EXPENSES</td><td id="execTotalExpenses" class="text-danger fw-bold">₱0.00</td></tr>
+                                
+                                <tr class="bg-light">
+                                    <td class="fw-bold fs-5 text-dark border-end-0">NET AMOUNT</td>
+                                    <td id="execNetAmount" class="fw-bold fs-5 text-primary border-start-0">₱0.00</td>
+                                </tr>
+                                
+                                <tr><td class="fw-bold text-muted">CURRENT INVENTORY VALUE</td><td id="execInventoryValue" class="text-muted fw-bold">₱0.00</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>

@@ -72,11 +72,8 @@ let currentTransactionModal;
 
 function openTransactionModal(itemCode, itemName, currentStock) {
     document.getElementById('transactionItemCode').value = itemCode;
-    // Show current stock in the modal header
     document.getElementById('transactionItemName').innerText = `Item: ${itemName} (In Stock: ${currentStock})`;
     document.getElementById('transactionQuantity').value = 1;
-    
-    // Store the limit invisibly for validation
     document.getElementById('transactionQuantity').dataset.stockLimit = currentStock;
 
     currentTransactionModal = new bootstrap.Modal(document.getElementById('transactionModal'));
@@ -97,7 +94,6 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
     const type = document.getElementById('transactionType').value;
     const quantity = parseInt(document.getElementById('transactionQuantity').value);
 
-    // --- SAFETY VALIDATION ---
     if (isNaN(quantity) || quantity <= 0) {
         return alert("Please enter a valid number greater than 0.");
     }
@@ -107,7 +103,6 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
             return alert(`🛑 Error: You cannot sell ${quantity} items. You only have ${stockLimit} in stock!`);
         }
     }
-    // -------------------------
 
     const transactionData = { item_code: itemCode, quantity: quantity };
 
@@ -135,7 +130,7 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
             
             loadProducts();         
             loadDashboardSummary();
-            loadDashboardCharts(); // Refresh chart when money moves!
+            loadDashboardCharts(); 
         } else { alert("Transaction failed. Check server console."); }
     } catch (error) { console.error("Error processing transaction:", error); }
 });
@@ -146,19 +141,26 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
 function switchView(viewId, linkId, titleText) {
     document.getElementById('view-dashboard').classList.add('d-none');
     document.getElementById('view-inventory').classList.add('d-none');
-    document.getElementById('view-sales').classList.add('d-none'); 
+    document.getElementById('view-sales-ledger').classList.add('d-none'); 
+    document.getElementById('view-purchase-ledger').classList.add('d-none'); 
+    document.getElementById('view-master-reports').classList.add('d-none'); 
     document.getElementById('view-expenses').classList.add('d-none');
     document.getElementById('view-ar').classList.add('d-none'); 
     
     document.getElementById(viewId).classList.remove('d-none');
     
-    document.getElementById('nav-dashboard').className = 'nav-link text-dark';
-    document.getElementById('nav-inventory').className = 'nav-link text-dark';
-    document.getElementById('nav-sales').className = 'nav-link text-dark';    
-    document.getElementById('nav-expenses').className = 'nav-link text-dark'; 
-    document.getElementById('nav-ar').className = 'nav-link text-dark'; 
+    const allLinks = document.querySelectorAll('#sidebar .nav-link');
+    allLinks.forEach(link => {
+        link.classList.remove('active');
+        link.classList.add('text-dark');
+    });
     
-    document.getElementById(linkId).className = 'nav-link active';
+    const activeLink = document.getElementById(linkId);
+    if(activeLink) {
+        activeLink.classList.remove('text-dark');
+        activeLink.classList.add('active');
+    }
+    
     document.getElementById('pageTitle').innerText = titleText;
 }
 
@@ -170,17 +172,35 @@ document.getElementById('nav-dashboard').addEventListener('click', () => {
 document.getElementById('nav-inventory').addEventListener('click', () => {
     switchView('view-inventory', 'nav-inventory', 'Inventory Management');
 });
-document.getElementById('nav-sales').addEventListener('click', () => {
-    switchView('view-sales', 'nav-sales', 'Sales & Purchases History');
-    loadDailyReports(); 
+document.getElementById('nav-sales-ledger').addEventListener('click', () => {
+    switchView('view-sales-ledger', 'nav-sales-ledger', 'Sales Ledger');
+    if (typeof loadSalesLedger === "function") loadSalesLedger(); 
+});
+document.getElementById('nav-purchase-ledger').addEventListener('click', () => {
+    switchView('view-purchase-ledger', 'nav-purchase-ledger', 'Purchase Ledger');
+    if (typeof loadPurchaseLedger === "function") loadPurchaseLedger(); 
+});
+document.getElementById('nav-master-reports').addEventListener('click', () => {
+    switchView('view-master-reports', 'nav-master-reports', 'Master Financial Reports');
+    if (typeof loadPurchaseAggregation === "function") loadPurchaseAggregation('daily');
+    
+    // Auto-Set the dates to the current month when opened
+    if (!document.getElementById('reportStartDate').value) {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        document.getElementById('reportStartDate').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('reportEndDate').value = today.toISOString().split('T')[0];
+    }
+    // Auto-generate the report
+    if (typeof generateExecutiveReport === "function") generateExecutiveReport(); 
 });
 document.getElementById('nav-expenses').addEventListener('click', () => {
     switchView('view-expenses', 'nav-expenses', 'Operating Expenses');
-    loadExpenses();
+    if (typeof loadExpenses === "function") loadExpenses();
 });
 document.getElementById('nav-ar').addEventListener('click', () => {
     switchView('view-ar', 'nav-ar', 'Accounts Receivable');
-    loadAR(); 
+    if (typeof loadAR === "function") loadAR(); 
 });
 
 // ==========================================
@@ -188,17 +208,14 @@ document.getElementById('nav-ar').addEventListener('click', () => {
 // ==========================================
 async function loadDashboardSummary() {
     try {
-        // THE FIX: Ensure this points to the new MVC route
         const response = await fetch('/api/reports/summary');
         const data = await response.json();
-        // ... (rest of the function stays exactly the same)
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
         document.getElementById('totalSalesText').innerText = currencyFormatter.format(data.total_sales || 0);
         document.getElementById('netProfitText').innerText = currencyFormatter.format(data.net_amount || 0);
     } catch (error) { console.error("Error loading financial summary:", error); }
 }
 
-// Global variables to hold our 3 charts
 let salesChart = null;
 let purchaseChart = null;
 let expenseChart = null;
@@ -211,7 +228,6 @@ async function loadDashboardCharts(days = 7) {
         const expenseRes = await fetch('/api/expenses');
         const expenseData = await expenseRes.json();
 
-        // Data Formatters
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
 
         const filteredData = dailyData.slice(0, days).reverse(); 
@@ -219,7 +235,6 @@ async function loadDashboardCharts(days = 7) {
         const revenues = filteredData.map(day => day.total_revenue);
         const cogs = filteredData.map(day => day.total_cogs);
 
-        // 1. Calculate & Display Total COGS
         const totalCogsValue = cogs.reduce((sum, val) => sum + val, 0);
         document.getElementById('totalCogsText').innerText = currencyFormatter.format(totalCogsValue);
 
@@ -231,7 +246,6 @@ async function loadDashboardCharts(days = 7) {
         const expLabels = Object.keys(expenseTotals);
         const expAmounts = Object.values(expenseTotals);
 
-        // 2. Calculate Total Expenses (For the new plugin)
         const totalExpenseValue = expAmounts.reduce((sum, val) => sum + val, 0);
         const formattedExpenseTotal = currencyFormatter.format(totalExpenseValue);
 
@@ -239,7 +253,6 @@ async function loadDashboardCharts(days = 7) {
         if (purchaseChart) purchaseChart.destroy();
         if (expenseChart) expenseChart.destroy();
 
-        // --- CHART 1: MAIN SALES ---
         const ctxSales = document.getElementById('salesChart').getContext('2d');
         salesChart = new Chart(ctxSales, {
             type: 'bar',
@@ -266,7 +279,6 @@ async function loadDashboardCharts(days = 7) {
             }
         });
 
-        // --- CHART 2: PURCHASES / COGS ---
         const ctxPurchases = document.getElementById('purchaseChart').getContext('2d');
         const gradient = ctxPurchases.createLinearGradient(0, 0, 0, 100);
         gradient.addColorStop(0, 'rgba(139, 92, 246, 0.4)'); 
@@ -299,32 +311,22 @@ async function loadDashboardCharts(days = 7) {
             }
         });
 
-        // --- CHART 3: EXPENSES (FIXED WITH CUSTOM PLUGIN) ---
         const ctxExpense = document.getElementById('expenseChart').getContext('2d');
-        
-        // ✨ THE FIX: This paints the text mathematically centered inside the doughnut
         const centerTextPlugin = {
             id: 'centerText',
             beforeDraw: function(chart) {
                 const { ctx, chartArea: { left, top, width, height } } = chart;
                 ctx.save();
-                
-                // Find the exact center of the drawn chart area
                 const centerX = left + width / 2;
                 const centerY = top + height / 2;
-                
-                // Draw the Amount
                 ctx.font = 'bold 15px Inter, sans-serif';
                 ctx.fillStyle = '#334155';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(formattedExpenseTotal, centerX, centerY - 6);
-                
-                // Draw the 'Total' label
                 ctx.font = '11px Inter, sans-serif';
                 ctx.fillStyle = '#64748b';
                 ctx.fillText('Total', centerX, centerY + 12);
-                
                 ctx.restore();
             }
         };
@@ -340,7 +342,7 @@ async function loadDashboardCharts(days = 7) {
                     hoverOffset: 4
                 }]
             },
-            plugins: [centerTextPlugin], // Inject the plugin right here
+            plugins: [centerTextPlugin],
             options: {
                 responsive: true, maintainAspectRatio: false,
                 cutout: '80%', 
@@ -354,36 +356,62 @@ async function loadDashboardCharts(days = 7) {
     } catch (error) { console.error("Error loading charts:", error); }
 }
 
-// Dropdown Listener
 document.getElementById('chartTimeframe').addEventListener('change', (event) => {
     loadDashboardCharts(parseInt(event.target.value));
 });
 
 // ==========================================
-// 6. OTHER DATA LOADERS
+// 6. OTHER DATA LOADERS (LEDGERS & REPORTS)
 // ==========================================
-async function loadDailyReports() {
+async function loadSalesLedger() {
     try {
-        const response = await fetch('/api/reports/daily');
-        const dailyData = await response.json();
-        const tableBody = document.getElementById('dailyReportTableBody');
+        const response = await fetch('/api/ledger/sales');
+        const sales = await response.json();
+        const tableBody = document.getElementById('salesLedgerTableBody');
+        if(!tableBody) return;
         tableBody.innerHTML = ''; 
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
 
-        for (const day of dailyData) {
-            let profitColor = day.gross_profit >= 0 ? 'text-success' : 'text-danger';
+        sales.forEach(sale => {
             const row = `
                 <tr>
-                    <td class="fw-bold">${day.report_date}</td>
-                    <td>${day.items_sold}</td>
-                    <td class="text-muted">${currencyFormatter.format(day.total_revenue)}</td>
-                    <td class="text-muted">${currencyFormatter.format(day.total_cogs)}</td>
-                    <td class="fw-bold ${profitColor}">${currencyFormatter.format(day.gross_profit)}</td>
+                    <td class="text-muted small">${sale.date}</td>
+                    <td class="text-muted fw-bold">${sale.item_code}</td>
+                    <td class="text-start fw-bold text-dark">${sale.item_name}</td>
+                    <td class="text-muted">${currencyFormatter.format(sale.unit_price)}</td>
+                    <td class="fw-bold text-primary">${sale.qty_sold}</td>
+                    <td class="fw-bold text-success">${currencyFormatter.format(sale.total_sales)}</td>
                 </tr>
             `;
             tableBody.innerHTML += row;
-        }
-    } catch (error) { console.error("Error loading daily reports:", error); }
+        });
+    } catch (error) { console.error("Error loading sales ledger:", error); }
+}
+
+async function loadPurchaseLedger() {
+    try {
+        const response = await fetch('/api/ledger/purchases');
+        const purchases = await response.json();
+        const tableBody = document.getElementById('purchaseLedgerTableBody');
+        if(!tableBody) return;
+        tableBody.innerHTML = ''; 
+        const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
+        purchases.forEach(purchase => {
+            const row = `
+                <tr>
+                    <td class="text-muted small">${purchase.date}</td>
+                    <td class="text-muted fw-bold">${purchase.item_code}</td>
+                    <td class="text-start fw-bold text-dark">${purchase.item_name}</td>
+                    <td class="text-muted">${currencyFormatter.format(purchase.cost_price)}</td>
+                    <td class="fw-bold text-primary">${purchase.qty_purchased}</td>
+                    <td class="fw-bold text-danger">${currencyFormatter.format(purchase.total_cost)}</td>
+                    <td><span class="badge bg-light text-dark border">${purchase.supplier || 'N/A'}</span></td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    } catch (error) { console.error("Error loading purchase ledger:", error); }
 }
 
 async function loadExpenses() {
@@ -391,6 +419,7 @@ async function loadExpenses() {
         const response = await fetch('/api/expenses');
         const expenses = await response.json();
         const tableBody = document.getElementById('expenseTableBody');
+        if(!tableBody) return;
         tableBody.innerHTML = ''; 
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
 
@@ -422,7 +451,7 @@ document.getElementById('saveExpenseBtn').addEventListener('click', async () => 
             document.getElementById('expenseAmountInput').value = '';
             loadExpenses();
             loadDashboardSummary();
-            loadDashboardCharts() // Redraw chart to reflect the expense!
+            loadDashboardCharts(); 
         }
     } catch (error) { console.error("Error saving expense:", error); }
 });
@@ -432,25 +461,20 @@ async function loadAR() {
         const response = await fetch('/api/ar');
         const debts = await response.json();
         const tableBody = document.getElementById('arTableBody');
+        if(!tableBody) return;
         tableBody.innerHTML = ''; 
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
 
         for (const debt of debts) {
-            // 1. Check if the backend marked this as paid
-            // THE FIX: Converts whatever the database sends into lowercase just to be safe!
             const isPaid = debt.status.toLowerCase() === 'paid';
-
-            // 2. Create dynamic UI elements based on the status
             const statusBadge = isPaid 
                 ? `<span class="badge bg-success shadow-sm">Paid</span>` 
                 : `<span class="badge bg-warning text-dark shadow-sm">Unpaid</span>`;
             
-            // If paid, show a checkmark. If unpaid, show the action button.
             const actionButton = isPaid 
                 ? `<span class="text-success small fw-bold"><i class="bi bi-check-circle-fill"></i> Settled</span>`
                 : `<button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="markDebtPaid(${debt.id})">✓ Mark as Paid</button>`;
 
-            // Strike through the text if it's already paid
             const amountClass = isPaid ? "text-muted text-decoration-line-through" : "text-warning fw-bold";
 
             const row = `
@@ -500,25 +524,18 @@ async function markDebtPaid(id) {
 // 7. REAL-TIME SEARCH LOGIC
 // ==========================================
 document.getElementById('searchInput').addEventListener('input', function(event) {
-    // 1. Get whatever the user typed and convert it to lowercase
     const searchTerm = event.target.value.toLowerCase();
-    
-    // 2. Grab all the rows inside the Inventory table
     const tableRows = document.querySelectorAll('#productTableBody tr');
-
-    // 3. Pro-Move: Automatically switch to the Inventory tab if they start typing!
     const inventoryTabIsHidden = document.getElementById('view-inventory').classList.contains('d-none');
+    
     if (searchTerm.length > 0 && inventoryTabIsHidden) {
         document.getElementById('nav-inventory').click(); 
     }
 
-    // 4. Loop through every row and check if it matches
     tableRows.forEach(row => {
-        // We want to search by Item Code (column 0) or Item Name (column 1)
         const itemCode = row.cells[0].textContent.toLowerCase();
         const itemName = row.cells[1].textContent.toLowerCase();
 
-        // If the search term is inside the code OR the name, show the row. Otherwise, hide it.
         if (itemCode.includes(searchTerm) || itemName.includes(searchTerm)) {
             row.style.display = ''; 
         } else {
@@ -526,6 +543,92 @@ document.getElementById('searchInput').addEventListener('input', function(event)
         }
     });
 });
+
+// ==========================================
+// 8. REPORT AGGREGATION (PHASE 8)
+// ==========================================
+async function loadPurchaseAggregation(type = 'daily') {
+    try {
+        // Fetch the data and attach the type (daily or monthly)
+        const response = await fetch(`/api/reports/purchases?type=${type}`);
+        const data = await response.json();
+        const tableBody = document.getElementById('purchaseAggTableBody');
+        if(!tableBody) return;
+        tableBody.innerHTML = ''; 
+        const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
+        data.forEach(row => {
+            let displayDate = row.date;
+            
+            // Format "2026-06" into "June 2026" for the monthly view to make it look professional
+            if (type === 'monthly') {
+                const [year, month] = row.date.split('-');
+                const dateObj = new Date(year, month - 1);
+                displayDate = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+            }
+
+            const tr = `
+                <tr>
+                    <td class="fw-bold text-muted">${displayDate}</td>
+                    <td class="fw-bold text-danger">-${currencyFormatter.format(row.total_cost)}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += tr;
+        });
+        
+        // Ensure the dropdown correctly displays what is currently being shown
+        document.getElementById('purchaseAggToggle').value = type;
+    } catch (error) { console.error("Error loading purchase aggregation:", error); }
+}
+
+// Listen for when the user changes the dropdown from Daily to Monthly
+const purchaseAggToggle = document.getElementById('purchaseAggToggle');
+if (purchaseAggToggle) {
+    purchaseAggToggle.addEventListener('change', (event) => {
+        loadPurchaseAggregation(event.target.value);
+    });
+}
+
+// ==========================================
+// 9. EXECUTIVE MASTER REPORT (EXCEL REPLICA)
+// ==========================================
+async function generateExecutiveReport() {
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
+
+    if (!startDate || !endDate) return alert("Please select both a start and end date.");
+
+    try {
+        // Ask the backend to crunch the math for this specific timeframe!
+        const response = await fetch(`/api/reports/summary?start=${startDate}&end=${endDate}`);
+        const data = await response.json();
+        const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
+        // Populate the Text Dates
+        document.getElementById('execStartDate').innerText = startDate;
+        document.getElementById('execEndDate').innerText = endDate;
+
+        // Populate the Money 
+        document.getElementById('execTotalSales').innerText = currencyFormatter.format(data.total_sales || 0);
+        document.getElementById('execTotalPurchases').innerText = currencyFormatter.format(data.total_purchases || 0);
+        document.getElementById('execTotalExpenses').innerText = currencyFormatter.format(data.total_expenses || 0);
+        
+        // Dynamically color the Net Amount (Green if positive, Red if they are losing money)
+        const netAmountEl = document.getElementById('execNetAmount');
+        netAmountEl.innerText = currencyFormatter.format(data.net_amount || 0);
+        netAmountEl.className = data.net_amount >= 0 ? 'fw-bold fs-5 text-success border-start-0' : 'fw-bold fs-5 text-danger border-start-0';
+
+        // Populate Current Inventory Value
+        document.getElementById('execInventoryValue').innerText = currencyFormatter.format(data.current_inventory_value || 0);
+
+    } catch (error) { console.error("Error generating executive report:", error); }
+}
+
+// Bind the Generate button
+const generateReportBtn = document.getElementById('generateReportBtn');
+if (generateReportBtn) {
+    generateReportBtn.addEventListener('click', generateExecutiveReport);
+}
 
 // Initialize on page load
 loadProducts();

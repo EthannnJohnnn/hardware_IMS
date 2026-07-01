@@ -61,7 +61,7 @@ body {
 
 #main-content {
     flex-grow: 1;
-    padding: 2.5rem;
+    padding: 1.5rem 2.5rem 2.5rem 2.5rem;
     background-color: var(--bg-app);
     min-height: 100vh;
     overflow-x: hidden;
@@ -75,15 +75,52 @@ body {
     background: linear-gradient(180deg, var(--slate-50) 0%, var(--slate-100) 100%);
     border-right: 1px solid var(--border-smooth);
     width: 280px;
+    min-width: 280px; /* Force it to stay exactly 280px */
+    flex-shrink: 0;   /* Never squish this */
     position: sticky;
     top: 0;
     z-index: 100;
+    /* THE FIX: real padding so the logo/nav aren't glued to the edges */
+    padding: 1.5rem 1.25rem;
 }
 
-#sidebar h4 {
+/* ---- Brand block (logo) ---- */
+.sidebar-brand {
+    padding: 0 0.25rem;
+}
+
+.sidebar-brand .brand-icon-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    box-shadow: 0 6px 14px -4px rgba(79, 70, 229, 0.45);
+}
+
+.sidebar-brand .brand-icon-wrap i {
+    color: #fff;
+    font-size: 1.15rem;
+}
+
+.sidebar-brand h4 {
     font-weight: 700;
     letter-spacing: -0.03em;
-    color: var(--primary) !important;
+    color: var(--slate-900) !important;
+    margin: 0;
+    line-height: 1.1;
+    font-size: 1.25rem;
+}
+
+.sidebar-brand small {
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
 .nav-pills .nav-link {
@@ -149,6 +186,76 @@ body {
     box-shadow: 0 0 0 4px var(--primary-glow) !important;
     border-color: var(--primary) !important;
     color: var(--slate-900);
+}
+
+/* ---- Navbar right-side user cluster ---- */
+.navbar-user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-left: 1rem;
+    border-left: 1px solid var(--border-smooth);
+    white-space: nowrap;
+}
+
+.navbar-user .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.navbar-user .user-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--slate-900);
+}
+
+.navbar-user .user-role {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.notif-bell {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    transition: color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.notif-bell:hover {
+    color: var(--primary);
+    box-shadow: var(--shadow-md);
+}
+
+.notif-bell::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    border: 2px solid var(--bg-surface);
 }
 
 /* ==========================================================================
@@ -306,7 +413,7 @@ body {
     transition: all var(--transition-normal);
 }
 
-/* THE FIX: Give the dropdown arrow its breathing room back */
+/* Give the dropdown arrow its breathing room */
 .form-select {
     padding-right: 2.5rem !important; 
 }
