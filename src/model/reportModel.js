@@ -7,23 +7,27 @@ const ReportModel = {
     getSummaryByDate: (startDate, endDate, callback) => {
         const summary = { total_sales: 0, total_purchases: 0, total_expenses: 0, net_amount: 0 };
 
+        // RESTORED: s.sale_date
         const salesQuery = `
             SELECT SUM(s.quantity * p.srp) as total 
             FROM sales s JOIN products p ON s.item_code = p.item_code
             WHERE DATE(s.sale_date) BETWEEN ? AND ?`;
 
+        // RESTORED: purchase_date
         const purchQuery = `SELECT SUM(quantity * cost_price) as total FROM purchases WHERE DATE(purchase_date) BETWEEN ? AND ?`;
+        
+        // RESTORED: expense_date
         const expQuery = `SELECT SUM(amount) as total FROM expenses WHERE DATE(expense_date) BETWEEN ? AND ?`;
 
         // Run queries sequentially passing the start and end dates
         db.get(salesQuery, [startDate, endDate], (err, salesRow) => {
-            if (!err && salesRow.total) summary.total_sales = salesRow.total;
+            if (!err && salesRow && salesRow.total) summary.total_sales = salesRow.total;
 
             db.get(purchQuery, [startDate, endDate], (err, purchRow) => {
-                if (!err && purchRow.total) summary.total_purchases = purchRow.total;
+                if (!err && purchRow && purchRow.total) summary.total_purchases = purchRow.total;
 
                 db.get(expQuery, [startDate, endDate], (err, expRow) => {
-                    if (!err && expRow.total) summary.total_expenses = expRow.total;
+                    if (!err && expRow && expRow.total) summary.total_expenses = expRow.total;
 
                     // Calculate Net Amount for this specific timeframe
                     summary.net_amount = summary.total_sales - summary.total_purchases - summary.total_expenses;
@@ -35,8 +39,7 @@ const ReportModel = {
 
     // [x] CHECKLIST ITEMS 1 & 2: Daily Sales Grouping & COGS Calculation
     getDailySalesReport: (startDate, endDate, callback) => {
-        // This query does the heavy lifting: It groups by day, calculates revenue, 
-        // subtracts the specific Cost of Goods Sold (COGS), and gives you Gross Profit.
+        // RESTORED: All instances of s.sale_date
         const sql = `
             SELECT 
                 DATE(s.sale_date) as report_date,

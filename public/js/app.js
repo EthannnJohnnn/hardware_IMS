@@ -135,7 +135,7 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
             
             loadProducts();         
             loadDashboardSummary();
-            loadDashboardChart(); // Refresh chart when money moves!
+            loadDashboardCharts(); // Refresh chart when money moves!
         } else { alert("Transaction failed. Check server console."); }
     } catch (error) { console.error("Error processing transaction:", error); }
 });
@@ -188,8 +188,10 @@ document.getElementById('nav-ar').addEventListener('click', () => {
 // ==========================================
 async function loadDashboardSummary() {
     try {
+        // THE FIX: Ensure this points to the new MVC route
         const response = await fetch('/api/reports/summary');
         const data = await response.json();
+        // ... (rest of the function stays exactly the same)
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
         document.getElementById('totalSalesText').innerText = currencyFormatter.format(data.total_sales || 0);
         document.getElementById('netProfitText').innerText = currencyFormatter.format(data.net_amount || 0);
@@ -420,7 +422,7 @@ document.getElementById('saveExpenseBtn').addEventListener('click', async () => 
             document.getElementById('expenseAmountInput').value = '';
             loadExpenses();
             loadDashboardSummary();
-            loadDashboardChart(); // Redraw chart to reflect the expense!
+            loadDashboardCharts() // Redraw chart to reflect the expense!
         }
     } catch (error) { console.error("Error saving expense:", error); }
 });
