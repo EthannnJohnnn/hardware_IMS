@@ -159,7 +159,26 @@
                             </div>
                         </div>
 
-                    </div> </div> </div> <div id="view-inventory" class="d-none">
+                    </div> </div> <div class="card shadow-sm border-0 mt-4 border-top border-warning border-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                        <h5 class="m-0 fw-bold text-dark"><i class="bi bi-journal-check text-warning me-2"></i>Admin Workspace & Tasks</h5>
+                        
+                        <div class="d-flex gap-3">
+                            <div class="btn-group shadow-sm">
+                                <button type="button" class="btn btn-sm btn-light border" onclick="formatNote('bold')" title="Bold"><i class="bi bi-type-bold"></i></button>
+                                <button type="button" class="btn btn-sm btn-light border" onclick="formatNote('italic')" title="Italic"><i class="bi bi-type-italic"></i></button>
+                                <button type="button" class="btn btn-sm btn-light border" onclick="formatNote('insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                <button type="button" class="btn btn-sm btn-light border" onclick="insertCheckbox()" title="Add Checkbox"><i class="bi bi-check2-square"></i></button>
+                            </div>
+                            <button id="saveNoteBtn" class="btn btn-sm btn-warning fw-bold px-4 shadow-sm">Save Workspace</button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="globalStickyNote" class="p-4" contenteditable="true" style="min-height: 350px; outline: none; font-size: 1.05rem; line-height: 1.6; background-color: #fffdf8;"></div>
+                    </div>
+                </div>
+
+            </div> <div id="view-inventory" class="d-none">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="fw-bold m-0 text-primary">Product Management</h4>
                     <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">

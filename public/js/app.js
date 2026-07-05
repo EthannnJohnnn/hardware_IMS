@@ -630,6 +630,65 @@ if (generateReportBtn) {
     generateReportBtn.addEventListener('click', generateExecutiveReport);
 }
 
+// ==========================================
+// 10. ADMIN WORKSPACE & TASK LOGIC
+// ==========================================
+
+// 1. Toolbar Functions
+function formatNote(command) {
+    document.execCommand(command, false, null);
+    document.getElementById('globalStickyNote').focus();
+}
+
+function insertCheckbox() {
+    // Injects a clickable HTML checkbox directly into the text!
+    const checkboxHTML = '&nbsp;<input type="checkbox"> &nbsp;';
+    document.execCommand('insertHTML', false, checkboxHTML);
+    document.getElementById('globalStickyNote').focus();
+}
+
+// 2. Load the Workspace from the Database
+async function loadStickyNote() {
+    try {
+        const response = await fetch('/api/note');
+        const data = await response.json();
+        if (data && data.content) {
+            // Use innerHTML so the checkboxes and bold tags render correctly
+            document.getElementById('globalStickyNote').innerHTML = data.content;
+        }
+    } catch (error) { console.error("Error loading workspace:", error); }
+}
+
+// 3. Save the Workspace to the Database
+const saveNoteBtn = document.getElementById('saveNoteBtn');
+if (saveNoteBtn) {
+    saveNoteBtn.addEventListener('click', async () => {
+        // Grab all the formatted HTML inside the editor
+        const content = document.getElementById('globalStickyNote').innerHTML;
+        
+        try {
+            const response = await fetch('/api/note', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content })
+            });
+            
+            if (response.ok) {
+                const originalText = saveNoteBtn.innerHTML;
+                saveNoteBtn.innerHTML = "Saved! <i class='bi bi-check-lg'></i>";
+                saveNoteBtn.classList.replace('btn-warning', 'btn-success');
+                
+                setTimeout(() => { 
+                    saveNoteBtn.innerHTML = originalText; 
+                    saveNoteBtn.classList.replace('btn-success', 'btn-warning');
+                }, 2000);
+            }
+        } catch (error) { console.error("Error saving workspace:", error); }
+    });
+}
+
+// Initialize the workspace when the app loads
+loadStickyNote();
 // Initialize on page load
 loadProducts();
 loadDashboardSummary();

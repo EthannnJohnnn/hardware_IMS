@@ -9,6 +9,7 @@ const reportRoutes = require('./src/routes/reportRoute');
 const expenseRoutes = require('./src/routes/expenseRoute');
 const arRoutes = require('./src/routes/arRoute');
 const ledgerRoutes = require('./src/routes/ledgerRoute'); // <-- NEW LEDGER ROUTE
+const noteRoutes = require('./src/routes/noteRoute');
 
 const app = express();
 const PORT = 3000;
@@ -24,6 +25,8 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/ar', arRoutes); 
 app.use('/api/ledger', ledgerRoutes); // <-- WIRE IT UP HERE
+app.use('/api/note', noteRoutes);
+
 
 app.listen(PORT, () => {
     console.log(`🚀 Server is running live on http://localhost:${PORT}`);
