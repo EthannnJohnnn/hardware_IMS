@@ -88,7 +88,7 @@
                 </div>
             </nav>
 
-            <div id="view-dashboard">
+            <div id="view-dashboard" class="p-4">
                 
                 <div class="row mb-4">
                     <div class="col-md-4">
@@ -178,14 +178,14 @@
                     </div>
                 </div>
 
-            </div> <div id="view-inventory" class="d-none">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="fw-bold m-0 text-primary">Product Management</h4>
+            </div> <div id="view-inventory" class="d-none p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold m-0 text-primary"><i class="bi bi-box-seam me-2"></i>Product Management</h4>
                     <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                        + Add New Product
+                        <i class="bi bi-plus-lg me-1"></i>Add New Product
                     </button>
                 </div>
-                <div class="card shadow-sm border-0">
+                <div class="card shadow-sm border-0 border-top border-info border-4">
                     <div class="card-body p-0">
                         <table class="table table-hover mb-0">
                             <thead>
@@ -204,11 +204,16 @@
                 </div>
             </div>
 
-            <div id="view-sales-ledger" class="d-none">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="fw-bold m-0 text-primary">Sales Ledger</h4>
+            <div id="view-sales-ledger" class="d-none p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold m-0 text-primary"><i class="bi bi-graph-up-arrow me-2"></i>Sales Ledger</h4>
+                    
+                    <button id="exportSalesBtn" class="btn btn-sm btn-success fw-bold px-3 shadow-sm">
+                        <i class="bi bi-file-earmark-excel me-1"></i> Export to Excel
+                    </button>
                 </div>
-                <div class="card shadow-sm border-0">
+                
+                <div class="card shadow-sm border-0 border-top border-success border-4">
                     <div class="card-body p-0 table-responsive">
                         <table class="table table-hover mb-0 text-center">
                             <thead>
@@ -227,11 +232,16 @@
                 </div>
             </div>
 
-            <div id="view-purchase-ledger" class="d-none">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="fw-bold m-0 text-primary">Purchase Ledger</h4>
+            <div id="view-purchase-ledger" class="d-none p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold m-0 text-primary"><i class="bi bi-box-arrow-in-down me-2"></i>Purchase Ledger</h4>
+                    
+                    <button id="exportPurchasesBtn" class="btn btn-sm btn-primary fw-bold px-3 shadow-sm">
+                        <i class="bi bi-file-earmark-excel me-1"></i> Export to Excel
+                    </button>
                 </div>
-                <div class="card shadow-sm border-0">
+                
+                <div class="card shadow-sm border-0 border-top border-primary border-4">
                     <div class="card-body p-0 table-responsive">
                         <table class="table table-hover mb-0 text-center">
                             <thead>
@@ -251,9 +261,9 @@
                 </div>
             </div>
             
-            <div id="view-master-reports" class="d-none">
+            <div id="view-master-reports" class="d-none p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="fw-bold m-0 text-primary">Master Financial Reports</h4>
+                    <h4 class="fw-bold m-0 text-primary"><i class="bi bi-file-earmark-bar-graph me-2"></i>Master Financial Reports</h4>
                 </div>
 
                 <div class="card shadow-sm border-0 mb-4">
@@ -316,14 +326,14 @@
                 </div>
             </div>
 
-            <div id="view-expenses" class="d-none">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="fw-bold m-0 text-primary">Operating Expenses</h4>
+            <div id="view-expenses" class="d-none p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold m-0 text-primary"><i class="bi bi-receipt me-2"></i>Operating Expenses</h4>
                     <button class="btn btn-danger shadow-sm" data-bs-toggle="modal" data-bs-target="#expenseModal">
-                        - Log Expense
+                        <i class="bi bi-dash-lg me-1"></i>Log Expense
                     </button>
                 </div>
-                <div class="card shadow-sm border-0">
+                <div class="card shadow-sm border-0 border-top border-danger border-4">
                     <div class="card-body p-0">
                         <table class="table table-hover mb-0">
                             <thead>
@@ -339,14 +349,14 @@
                 </div>
             </div>
 
-            <div id="view-ar" class="d-none">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="fw-bold m-0 text-primary">Accounts Receivable</h4>
+            <div id="view-ar" class="d-none p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold m-0 text-primary"><i class="bi bi-wallet2 me-2"></i>Accounts Receivable</h4>
                     <button class="btn btn-warning shadow-sm text-dark" data-bs-toggle="modal" data-bs-target="#arModal">
-                        + Log Customer Debt
+                        <i class="bi bi-plus-lg me-1"></i>Log Customer Debt
                     </button>
                 </div>
-                <div class="card shadow-sm border-0">
+                <div class="card shadow-sm border-0 border-top border-warning border-4">
                     <div class="card-body p-0">
                         <table class="table table-hover mb-0 text-center">
                             <thead>

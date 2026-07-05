@@ -687,6 +687,28 @@ if (saveNoteBtn) {
     });
 }
 
+// ==========================================
+// 11. EXCEL EXPORT LOGIC
+// ==========================================
+const exportSalesBtn = document.getElementById('exportSalesBtn');
+if (exportSalesBtn) {
+    exportSalesBtn.addEventListener('click', () => {
+        // Change button text to show it's working
+        const originalText = exportSalesBtn.innerHTML;
+        exportSalesBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+        exportSalesBtn.classList.add('disabled');
+
+        // Trigger the browser's native download behavior
+        window.location.href = '/api/export/sales';
+
+        // Reset the button after 2 seconds
+        setTimeout(() => {
+            exportSalesBtn.innerHTML = originalText;
+            exportSalesBtn.classList.remove('disabled');
+        }, 2000);
+    });
+}
+
 // Initialize the workspace when the app loads
 loadStickyNote();
 // Initialize on page load

@@ -10,6 +10,7 @@ const expenseRoutes = require('./src/routes/expenseRoute');
 const arRoutes = require('./src/routes/arRoute');
 const ledgerRoutes = require('./src/routes/ledgerRoute'); // <-- NEW LEDGER ROUTE
 const noteRoutes = require('./src/routes/noteRoute');
+const exportRoutes = require('./src/routes/exportRoute'); // <-- NEW
 
 const app = express();
 const PORT = 3000;
@@ -26,6 +27,7 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/ar', arRoutes); 
 app.use('/api/ledger', ledgerRoutes); // <-- WIRE IT UP HERE
 app.use('/api/note', noteRoutes);
+app.use('/api/export', exportRoutes); // <-- NEW
 
 
 app.listen(PORT, () => {
