@@ -489,14 +489,15 @@ async function loadAR() {
                 ? `<span class="text-success small fw-bold"><i class="bi bi-check-circle-fill"></i> Settled</span>`
                 : `<button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="markDebtPaid(${debt.id})">✓ Mark as Paid</button>`;
 
-            const amountClass = isPaid ? "text-muted text-decoration-line-through" : "text-warning fw-bold";
+            const amountClass = isPaid ? "text-muted text-decoration-line-through" : "text-danger fw-bold fs-6";
 
             const row = `
                 <tr>
-                    <td class="text-muted fw-bold">${debt.date_issued || debt.date}</td>
+                    <td class="text-muted fw-bold">${debt.date}</td>
                     <td class="fw-bold text-primary">${debt.customer_name}</td>
-                    <td class="text-muted">${debt.description}</td>
-                    <td class="${amountClass}">${currencyFormatter.format(debt.amount)}</td>
+                    <td class="text-muted fw-bold">${debt.item_name} <br><small class="text-secondary">${debt.item_code}</small></td>
+                    <td class="fw-bold text-dark">${debt.qty}</td>
+                    <td class="${amountClass}">${currencyFormatter.format(debt.total_amount)}</td>
                     <td>${statusBadge}</td>
                     <td>${actionButton}</td>
                 </tr>
@@ -506,31 +507,76 @@ async function loadAR() {
     } catch (error) { console.error("Error loading AR:", error); }
 }
 
+// Auto-fill the searchable dropdown when the modal opens
+async function populateARDropdown() {
+    const datalist = document.getElementById('arProductList');
+    const input = document.getElementById('arProductInput');
+    input.value = ''; 
+    datalist.innerHTML = '';
+    
+    try {
+        const response = await fetch('/api/products');
+        const products = await response.json();
+        products.forEach(p => {
+            datalist.innerHTML += `<option value="${p.item_code}">${p.item_name} (In Stock: ${p.current_stock} | SRP: ₱${p.srp})</option>`;
+        });
+    } catch (error) { console.error("Error loading products", error); }
+}
+
+const arModalEl = document.getElementById('arModal');
+if (arModalEl) {
+    arModalEl.addEventListener('show.bs.modal', populateARDropdown);
+}
+
 document.getElementById('saveArBtn').addEventListener('click', async () => {
-    const debtData = {
-        customer_name: document.getElementById('arNameInput').value,
-        description: document.getElementById('arDescInput').value,
-        amount: parseFloat(document.getElementById('arAmountInput').value)
-    };
-    if (!debtData.customer_name || !debtData.amount) return alert("Name and amount are required.");
+    const customer_name = document.getElementById('arNameInput').value;
+    const item_code = document.getElementById('arProductInput').value;
+    const qty = parseInt(document.getElementById('arQtyInput').value);
+    const alertBox = document.getElementById('arAlert');
+    
+    alertBox.classList.add('d-none');
+
+    if (!customer_name || !item_code || isNaN(qty) || qty <= 0) {
+        alertBox.innerText = "Please fill out all fields and select a valid product.";
+        alertBox.classList.remove('d-none');
+        return;
+    }
 
     try {
-        const response = await fetch('/api/ar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(debtData) });
-        if (response.ok) {
-            bootstrap.Modal.getInstance(document.getElementById('arModal')).hide();
-            document.getElementById('arNameInput').value = '';
-            document.getElementById('arDescInput').value = '';
-            document.getElementById('arAmountInput').value = '';
-            loadAR();
-        }
-    } catch (error) { console.error("Error saving debt:", error); }
+        const response = await fetch('/api/ar', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ customer_name, item_code, qty }) 
+        });
+        
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to save debt.");
+        
+        bootstrap.Modal.getInstance(document.getElementById('arModal')).hide();
+        document.getElementById('arNameInput').value = '';
+        document.getElementById('arProductInput').value = '';
+        document.getElementById('arQtyInput').value = '';
+        
+        // Refresh EVERYTHING so stock and AR update instantly
+        loadAR();
+        loadProducts(); 
+    } catch (error) { 
+        alertBox.innerText = error.message;
+        alertBox.classList.remove('d-none');
+    }
 });
 
 async function markDebtPaid(id) {
-    if(!confirm("Are you sure this customer has fully paid this amount?")) return;
+    if(!confirm("Are you sure this customer paid? This will automatically convert the debt into a recorded Sale!")) return;
     try {
         const response = await fetch(`/api/ar/${id}/pay`, { method: 'PUT' });
-        if (response.ok) loadAR(); 
+        if (response.ok) {
+            // Update UI to reflect the newly settled debt and newly recorded revenue!
+            loadAR(); 
+            loadDashboardSummary();
+            loadDashboardCharts();
+            if (typeof loadSalesLedger === "function") loadSalesLedger();
+        }
     } catch (error) { console.error("Error marking debt as paid:", error); }
 }
 

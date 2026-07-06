@@ -58,17 +58,16 @@ const db = new sqlite3.Database('./inventory.sqlite', (err) => {
                 )
             `);
 
-            // 5. NEW Accounts Receivable Table (For tracking customer debt)
-            db.run(`
-                CREATE TABLE IF NOT EXISTS accounts_receivable (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    customer_name TEXT NOT NULL,      -- e.g., "Max C"
-                    description TEXT,                 -- e.g., "Cement and Rebars"
-                    amount REAL NOT NULL,             -- e.g., 3040.00
-                    status TEXT DEFAULT 'Unpaid',     -- Will change to 'Paid' later
-                    date_issued DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
+            // 5. Create Accounts Receivable Table (UPDATED FOR PHASE 12)
+            db.run(`CREATE TABLE IF NOT EXISTS ar (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                customer_name TEXT,
+                item_code TEXT,
+                qty INTEGER,
+                total_amount REAL,
+                status TEXT DEFAULT 'Unpaid'
+            )`);
 
             console.log('✅ All financial and inventory database tables are ready.');
         });
