@@ -424,8 +424,11 @@
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Transaction Type</label>
                         <select class="form-select bg-light" id="transactionType">
-                            <option value="sale">Sale (Deduct from Stock)</option>
-                            <option value="purchase">Purchase (Add to Stock)</option>
+                            <option value="sale">Sale (Record Revenue & Deduct Stock)</option>
+                            <option value="purchase">Purchase (Record Cost & Add Stock)</option>
+                            <option disabled>──────────</option>
+                            <option value="transfer_out">Branch Transfer Out (Deduct Stock ONLY)</option>
+                            <option value="transfer_in">Branch Transfer In (Add Stock ONLY)</option>
                         </select>
                     </div>
                     <div class="mb-3">

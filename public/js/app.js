@@ -97,28 +97,42 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
     if (isNaN(quantity) || quantity <= 0) {
         return alert("Please enter a valid number greater than 0.");
     }
-    if (type === 'sale') {
+    
+    // Prevent deducting more stock than you have for Sales AND Transfers Out
+    if (type === 'sale' || type === 'transfer_out') {
         const stockLimit = parseInt(document.getElementById('transactionQuantity').dataset.stockLimit);
         if (quantity > stockLimit) {
-            return alert(`🛑 Error: You cannot sell ${quantity} items. You only have ${stockLimit} in stock!`);
+            return alert(`🛑 Error: You only have ${stockLimit} in stock!`);
         }
     }
 
-    const transactionData = { item_code: itemCode, quantity: quantity };
+    let apiUrl = '';
+    let method = 'POST';
+    let payload = {};
 
-    if (type === 'purchase') {
-        transactionData.supplier = document.getElementById('transactionSupplier').value;
-        transactionData.cost_price = parseFloat(document.getElementById('transactionCostPrice').value);
-        if (!transactionData.supplier || !transactionData.cost_price) return alert("Please enter Supplier and Cost Price.");
+    // Standard Financial Transactions
+    if (type === 'sale' || type === 'purchase') {
+        apiUrl = type === 'sale' ? '/api/transactions/sale' : '/api/transactions/purchase';
+        payload = { item_code: itemCode, quantity: quantity };
+        
+        if (type === 'purchase') {
+            payload.supplier = document.getElementById('transactionSupplier').value;
+            payload.cost_price = parseFloat(document.getElementById('transactionCostPrice').value);
+            if (!payload.supplier || !payload.cost_price) return alert("Please enter Supplier and Cost Price.");
+        }
+    } 
+    // ✨ NEW: Stock Adjustments (Branch Transfers) ✨
+    else {
+        apiUrl = '/api/products/adjust';
+        method = 'PUT'; 
+        payload = { item_code: itemCode, action: type, qty: quantity };
     }
-
-    const apiUrl = type === 'sale' ? '/api/transactions/sale' : '/api/transactions/purchase';
 
     try {
         const response = await fetch(apiUrl, {
-            method: 'POST',
+            method: method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(transactionData)
+            body: JSON.stringify(payload)
         });
 
         if (response.ok) {
