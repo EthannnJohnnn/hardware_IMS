@@ -269,13 +269,52 @@ document.getElementById('nav-ar').addEventListener('click', () => {
 // 5. FINANCIAL MATH & CHART.JS
 // ==========================================
 async function loadDashboardSummary() {
+    console.log("1. Dashboard Summary Function Started!"); // Check your F12 console for this!
     try {
         const response = await fetch('/api/reports/summary');
         const data = await response.json();
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
-        document.getElementById('totalSalesText').innerText = currencyFormatter.format(data.total_sales || 0);
-        document.getElementById('netProfitText').innerText = currencyFormatter.format(data.net_amount || 0);
-    } catch (error) { console.error("Error loading financial summary:", error); }
+
+        // Safely check if elements exist before updating them!
+        const salesText = document.getElementById('totalSalesText');
+        if (salesText) salesText.innerText = currencyFormatter.format(data.total_sales || 0);
+
+        const profitText = document.getElementById('netProfitText');
+        if (profitText) profitText.innerText = currencyFormatter.format(data.net_amount || 0);
+
+        // Fetch Purchases for COGS
+        const purchResponse = await fetch('/api/ledger/purchases');
+        const purchases = await purchResponse.json();
+
+        let totalCogsMath = 0;
+        purchases.forEach(p => totalCogsMath += p.total_cost);
+
+        const cogsText = document.getElementById('totalCogsText');
+        if (cogsText) {
+            cogsText.innerText = currencyFormatter.format(totalCogsMath);
+            console.log("2. COGS Text Updated to: ", totalCogsMath);
+        }
+
+        // 5. Update the Chart with the 7 most recent purchases
+        const chartInstance = Chart.getChart("purchaseChart");
+        if (chartInstance && purchases.length > 0) {
+            // Grab the last 7 purchases and put them in chronological order
+            const recentPurchases = purchases.slice(0, 7).reverse();
+            
+            // Map BOTH the costs (for the dots) and the dates (for the invisible labels)
+            const chartData = recentPurchases.map(p => p.total_cost);
+            const chartLabels = recentPurchases.map(p => p.date); // <-- THIS FIXES IT!
+
+            // Inject both into the chart so they match perfectly
+            chartInstance.data.labels = chartLabels; 
+            chartInstance.data.datasets[0].data = chartData;
+            
+            chartInstance.update();
+        }
+
+    } catch (error) { 
+        console.error("Dashboard Crash:", error); 
+    }
 }
 
 let salesChart = null;

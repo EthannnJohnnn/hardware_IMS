@@ -32,6 +32,7 @@ app.use('/api/export', exportRoutes); // <-- NEW
 app.use('/api/exchanges', exchangeRoute);
 app.use('/api/admin', require('./src/routes/adminRoute'));
 app.use('/api/repacks', require('./src/routes/repackRoute'));
+app.use('/api/ledger', ledgerRoutes); // <-- WIRE IT UP HERE
 
 
 app.listen(PORT, () => {
