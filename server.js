@@ -30,6 +30,7 @@ app.use('/api/ledger', ledgerRoutes); // <-- WIRE IT UP HERE
 app.use('/api/note', noteRoutes);
 app.use('/api/export', exportRoutes); // <-- NEW
 app.use('/api/exchanges', exchangeRoute);
+app.use('/api/admin', require('./src/routes/adminRoute'));
 
 
 app.listen(PORT, () => {

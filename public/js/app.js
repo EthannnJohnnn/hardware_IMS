@@ -395,6 +395,11 @@ async function loadSalesLedger() {
                     <td class="text-muted">${currencyFormatter.format(sale.unit_price)}</td>
                     <td class="fw-bold text-primary">${sale.qty_sold}</td>
                     <td class="fw-bold text-success">${currencyFormatter.format(sale.total_sales)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary shadow-sm" onclick="attemptEdit(${sale.id}, 'sale', ${sale.qty_sold})">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                    </td>
                 </tr>
             `;
             tableBody.innerHTML += row;
@@ -420,7 +425,12 @@ async function loadPurchaseLedger() {
                     <td class="text-muted">${currencyFormatter.format(purchase.cost_price)}</td>
                     <td class="fw-bold text-primary">${purchase.qty_purchased}</td>
                     <td class="fw-bold text-danger">${currencyFormatter.format(purchase.total_cost)}</td>
-                    <td><span class="badge bg-light text-dark border">${purchase.supplier || 'N/A'}</span></td>
+                    <td class="text-muted fw-bold">${purchase.supplier}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary shadow-sm" onclick="attemptEdit(${purchase.id}, 'purchase', ${purchase.qty_purchased}, ${purchase.cost_price}, '${purchase.supplier}')">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                    </td>
                 </tr>
             `;
             tableBody.innerHTML += row;
@@ -975,6 +985,93 @@ document.getElementById('processExchangeBtn').addEventListener('click', async ()
             alert("Failed to process exchange. Check inputs and stock limits.");
         }
     } catch (error) { console.error("Exchange Error:", error); }
+});
+
+// ==========================================
+// 14. ADMIN LEDGER EDITING & SECURITY
+// ==========================================
+let pendingEditData = null; // Stores what the user clicked while they enter their PIN
+
+// 1. Expose function to trigger the PIN modal from the HTML buttons
+window.attemptEdit = function(id, type, currentQty, currentCost, currentSupplier) {
+    pendingEditData = { id, type, qty: currentQty, cost: currentCost, supplier: currentSupplier };
+    document.getElementById('adminPinInput').value = '';
+    new bootstrap.Modal(document.getElementById('adminPinModal')).show();
+};
+
+// 2. Verify the PIN with the backend
+document.getElementById('verifyPinBtn').addEventListener('click', async () => {
+    const pin = document.getElementById('adminPinInput').value;
+    try {
+        const response = await fetch('/api/admin/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin })
+        });
+        
+        if (response.ok) {
+            // PIN Correct! Hide PIN modal and show Edit modal
+            bootstrap.Modal.getInstance(document.getElementById('adminPinModal')).hide();
+            
+            document.getElementById('editTargetId').value = pendingEditData.id;
+            document.getElementById('editTargetType').value = pendingEditData.type;
+            document.getElementById('editQtyInput').value = pendingEditData.qty;
+            
+            if (pendingEditData.type === 'purchase') {
+                document.getElementById('editPurchaseFields').classList.remove('d-none');
+                document.getElementById('editCostInput').value = pendingEditData.cost;
+                document.getElementById('editSupplierInput').value = pendingEditData.supplier;
+            } else {
+                document.getElementById('editPurchaseFields').classList.add('d-none');
+            }
+            
+            new bootstrap.Modal(document.getElementById('editLedgerModal')).show();
+        } else {
+            alert("Incorrect Admin PIN.");
+        }
+    } catch (error) { console.error(error); }
+});
+
+// 3. Save the Correction
+document.getElementById('saveLedgerEditBtn').addEventListener('click', async () => {
+    const id = document.getElementById('editTargetId').value;
+    const type = document.getElementById('editTargetType').value;
+    const qty = parseInt(document.getElementById('editQtyInput').value);
+    
+    let apiUrl = '';
+    let payload = { quantity: qty }; // For sales
+
+    if (type === 'purchase') {
+        apiUrl = `/api/admin/purchases/${id}`;
+        payload = { 
+            newQty: qty, 
+            newCost: parseFloat(document.getElementById('editCostInput').value), 
+            newSupplier: document.getElementById('editSupplierInput').value 
+        };
+    } else {
+        apiUrl = `/api/admin/sales/${id}`;
+    }
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('editLedgerModal')).hide();
+            alert("Record successfully corrected! Inventory has been automatically recalculated.");
+            
+            // Refresh everything so the dashboard math updates instantly
+            if (typeof loadSalesLedger === 'function') loadSalesLedger();
+            if (typeof loadPurchaseLedger === 'function') loadPurchaseLedger();
+            if (typeof loadProducts === 'function') loadProducts();
+            if (typeof loadDashboardSummary === 'function') loadDashboardSummary();
+        } else {
+            alert("Failed to correct ledger.");
+        }
+    } catch (error) { console.error(error); }
 });
 
 // Initialize the workspace when the app loads
