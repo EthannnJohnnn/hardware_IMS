@@ -528,42 +528,75 @@ document.getElementById('saveExpenseBtn').addEventListener('click', async () => 
     } catch (error) { console.error("Error saving expense:", error); }
 });
 
+// ==========================================
+// PHASE 16: ACCOUNTS RECEIVABLE RENDERING
+// ==========================================
 async function loadAR() {
     try {
-        const response = await fetch('/api/ar');
-        const debts = await response.json();
+        const response = await fetch('/api/ar'); // Ensure this matches your route
+        const arData = await response.json();
         const tableBody = document.getElementById('arTableBody');
-        if(!tableBody) return;
-        tableBody.innerHTML = ''; 
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+        
+        tableBody.innerHTML = '';
 
-        for (const debt of debts) {
-            const isPaid = debt.status.toLowerCase() === 'paid';
-            const statusBadge = isPaid 
-                ? `<span class="badge bg-success shadow-sm">Paid</span>` 
-                : `<span class="badge bg-warning text-dark shadow-sm">Unpaid</span>`;
+        arData.forEach(ar => {
+            let rowClass = "";
+            let textClass = "text-muted";
+            let penaltyClass = "text-muted";
             
-            const actionButton = isPaid 
-                ? `<span class="text-success small fw-bold"><i class="bi bi-check-circle-fill"></i> Settled</span>`
-                : `<button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="markDebtPaid(${debt.id})">✓ Mark as Paid</button>`;
-
-            const amountClass = isPaid ? "text-muted text-decoration-line-through" : "text-danger fw-bold fs-6";
+            // Apply Visual Color Warnings
+            if (ar.status === 'Unpaid' && ar.days_overdue > 7) {
+                rowClass = "table-warning text-dark border-warning"; // Entire row turns orange
+                textClass = "text-danger fw-bold";
+                if (ar.penalty > 0) penaltyClass = "text-danger fw-bold";
+            } else if (ar.status === 'Paid') {
+                rowClass = "table-light text-muted opacity-75"; // Fade out paid debts
+            }
 
             const row = `
-                <tr>
-                    <td class="text-muted fw-bold">${debt.date}</td>
-                    <td class="fw-bold text-primary">${debt.customer_name}</td>
-                    <td class="text-muted fw-bold">${debt.item_name} <br><small class="text-secondary">${debt.item_code}</small></td>
-                    <td class="fw-bold text-dark">${debt.qty}</td>
-                    <td class="${amountClass}">${currencyFormatter.format(debt.total_amount)}</td>
-                    <td>${statusBadge}</td>
-                    <td>${actionButton}</td>
+                <tr class="${rowClass}">
+                    <td class="small">${ar.date.split(' ')[0]}</td>
+                    <td class="fw-bold text-dark">${ar.customer_name}</td>
+                    <td class="small fw-bold">${ar.item_name}</td>
+                    <td class="fw-bold text-primary">${ar.quantity}</td>
+                    <td class="text-dark">${currencyFormatter.format(ar.base_debt)}</td>
+                    <td class="${textClass}">${ar.status === 'Paid' ? '--' : ar.days_overdue + ' Days'}</td>
+                    <td class="${penaltyClass}">+${currencyFormatter.format(ar.penalty)}</td>
+                    <td class="fw-bold text-danger fs-6">${currencyFormatter.format(ar.total_due)}</td>
+                    <td>
+                        <span class="badge ${ar.status === 'Paid' ? 'bg-success' : 'bg-danger shadow-sm'}">${ar.status}</span>
+                    </td>
+                    <td>
+                        ${ar.status === 'Unpaid' 
+                            ? `<button class="btn btn-sm btn-success shadow-sm fw-bold px-3" onclick="settleCustomerDebt(${ar.id}, ${ar.total_due})"><i class="bi bi-cash me-1"></i>Settle</button>` 
+                            : `<i class="bi bi-check-all text-success fs-5"></i>`}
+                    </td>
                 </tr>
             `;
             tableBody.innerHTML += row;
-        }
+        });
     } catch (error) { console.error("Error loading AR:", error); }
 }
+
+// Settlement Click Action
+window.settleCustomerDebt = async function(id, totalDue) {
+    const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+    if (!confirm(`Confirm Payment? Collect ${currencyFormatter.format(totalDue)} from the customer.`)) return;
+
+    try {
+        const response = await fetch(`/api/ar/${id}/pay`, { method: 'PUT' });
+        
+        if (response.ok) {
+            alert("Debt settled! Revenue and penalties have been added to the Sales Ledger.");
+            loadAR();
+            if (typeof loadSalesLedger === 'function') loadSalesLedger();
+            if (typeof loadDashboardSummary === 'function') loadDashboardSummary();
+        } else {
+            alert("Failed to settle debt. Check backend routes.");
+        }
+    } catch (error) { console.error(error); }
+};
 
 // Auto-fill the searchable dropdown when the modal opens
 async function populateARDropdown() {

@@ -3,7 +3,8 @@ const db = require('../config/database');
 const ProductModel = {
     getAllProducts: (callback) => {
         // ✨ NEW: Tell the database to ignore the phantom EXCHANGE product!
-        const sql = `SELECT * FROM products WHERE item_code != 'EXCHANGE'`;
+        // Ignore BOTH phantom products so they don't clutter the inventory
+        const sql = `SELECT * FROM products WHERE item_code NOT IN ('EXCHANGE', 'PENALTY')`;
         db.all(sql, [], (err, rows) => {
             if (err) return callback(err, null);
             return callback(null, rows);
