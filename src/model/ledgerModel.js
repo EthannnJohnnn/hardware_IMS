@@ -6,7 +6,9 @@ const LedgerModel = {
     // ==========================================
     getSalesLedger: (callback) => {
         const sql = `
-            SELECT s.id, s.sale_date AS date, s.item_code, p.item_name, p.srp AS unit_price, s.quantity AS qty_sold, (p.srp * s.quantity) AS total_sales
+            SELECT s.id, s.sale_date AS date, s.item_code, p.item_name, p.srp AS unit_price, 
+                   s.quantity AS qty_sold, COALESCE(s.discount, 0) AS discount, 
+                   ((p.srp * s.quantity) - COALESCE(s.discount, 0)) AS total_sales
             FROM sales s
             JOIN products p ON s.item_code = p.item_code
             ORDER BY s.sale_date DESC

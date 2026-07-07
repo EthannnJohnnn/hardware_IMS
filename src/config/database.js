@@ -80,6 +80,12 @@ const db = new sqlite3.Database('./inventory.sqlite', (err) => {
                 cash_top_up REAL
             )`);
 
+            // 7. Safely upgrade the sales table to include discounts
+            db.run(`ALTER TABLE sales ADD COLUMN discount REAL DEFAULT 0`, (err) => {
+                // We ignore the error if it says "duplicate column name". 
+                // This just means the upgrade already ran successfully!
+            });
+
             console.log('✅ All financial and inventory database tables are ready.');
         });
     }

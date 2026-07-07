@@ -5,14 +5,17 @@ const db = require('../config/database');
 const TransactionModel = {
 
     // --- FUNCTION 1: Record a Sale (Subtracts from stock) ---
-    // 'saleData' will contain { item_code: "AB-001", quantity: 2 }
+    // 'saleData' will contain { item_code: "AB-001", quantity: 2, discount: 50 }
     recordSale: (saleData, callback) => {
         
-        // Step A: Save the record into the 'sales' history table
-        const insertSaleQuery = `INSERT INTO sales (item_code, quantity) VALUES (?, ?)`;
+        // PHASE 15 UPDATE: Ensure discount is at least 0 if left blank by the cashier
+        const discountAmount = saleData.discount || 0; 
+
+        // Step A: Save the record into the 'sales' history table (Now includes discount!)
+        const insertSaleQuery = `INSERT INTO sales (item_code, quantity, discount) VALUES (?, ?, ?)`;
 
         // We run the first query...
-        db.run(insertSaleQuery, [saleData.item_code, saleData.quantity], function(err) {
+        db.run(insertSaleQuery, [saleData.item_code, saleData.quantity, discountAmount], function(err) {
             if (err) {
                 console.error("Error recording sale:", err);
                 return callback(err, null);
@@ -31,14 +34,13 @@ const TransactionModel = {
                 }
                 
                 // If both steps worked, we send a success message back
-                return callback(null, { message: "Sale recorded and stock updated successfully!" });
+                return callback(null, { message: "Sale recorded, stock updated, and discount applied successfully!" });
             });
         });
     },
 
     // --- FUNCTION 2: Record a Purchase/Restock (Adds to stock) ---
-    // 'purchaseData' will contain { item_code: "AB-001", quantity: 50 }
-    // --- FUNCTION 2: Record a Purchase/Restock (Adds to stock) ---
+    // 'purchaseData' will contain { item_code: "AB-001", quantity: 50, cost_price: 100, supplier: "Hardware Inc" }
     recordPurchase: (purchaseData, callback) => {
         
         // PHASE 4 UPDATE: Added cost_price and supplier to the INSERT statement

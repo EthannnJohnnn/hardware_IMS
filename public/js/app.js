@@ -7,6 +7,7 @@ async function loadProducts() {
     try {
         const response = await fetch('/api/products');
         const products = await response.json();
+        allProductsData = products; // Keep this in sync for the live transaction calculator
 
         document.getElementById('totalProductsText').innerText = products.length + " Items";
 
@@ -75,18 +76,58 @@ function openTransactionModal(itemCode, itemName, currentStock) {
     document.getElementById('transactionItemName').innerText = `Item: ${itemName} (In Stock: ${currentStock})`;
     document.getElementById('transactionQuantity').value = 1;
     document.getElementById('transactionQuantity').dataset.stockLimit = currentStock;
+    document.getElementById('transactionDiscount').value = 0;
+    document.getElementById('liveTotalDisplay').classList.add('d-none');
 
     currentTransactionModal = new bootstrap.Modal(document.getElementById('transactionModal'));
     currentTransactionModal.show();
 }
 
+// ==========================================
+// PHASE 15: LIVE MATH CALCULATOR FOR MODAL
+// ==========================================
+function calculateLiveTotal() {
+    const type = document.getElementById('transactionType').value;
+    const qty = parseInt(document.getElementById('transactionQuantity').value) || 0;
+    const discount = parseFloat(document.getElementById('transactionDiscount').value) || 0;
+
+    // We only calculate live totals for sales
+    if (type === 'sale') {
+        const itemCode = document.getElementById('transactionItemCode').value;
+        const selectedItem = allProductsData.find(p => p.item_code === itemCode);
+
+        if (selectedItem) {
+            let total = (selectedItem.srp * qty) - discount;
+            if (total < 0) total = 0; // Prevent negative totals!
+
+            document.getElementById('liveTotalDisplay').classList.remove('d-none');
+            const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+            document.getElementById('liveTotalAmount').innerText = currencyFormatter.format(total);
+        }
+    } else {
+        document.getElementById('liveTotalDisplay').classList.add('d-none');
+    }
+}
+
+document.getElementById('transactionQuantity').addEventListener('input', calculateLiveTotal);
+document.getElementById('transactionDiscount').addEventListener('input', calculateLiveTotal);
+
 document.getElementById('transactionType').addEventListener('change', function() {
     const purchaseFields = document.getElementById('purchaseFields');
+    const discountField = document.getElementById('discountField');
+
     if (this.value === 'purchase') {
-        purchaseFields.classList.remove('d-none'); 
+        purchaseFields.classList.remove('d-none');
+        discountField.classList.add('d-none');
+    } else if (this.value === 'sale') {
+        purchaseFields.classList.add('d-none');
+        discountField.classList.remove('d-none');
     } else {
-        purchaseFields.classList.add('d-none');    
+        purchaseFields.classList.add('d-none');
+        discountField.classList.add('d-none');
     }
+
+    calculateLiveTotal();
 });
 
 document.getElementById('saveTransactionBtn').addEventListener('click', async () => {
@@ -114,7 +155,11 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
     if (type === 'sale' || type === 'purchase') {
         apiUrl = type === 'sale' ? '/api/transactions/sale' : '/api/transactions/purchase';
         payload = { item_code: itemCode, quantity: quantity };
-        
+
+        if (type === 'sale') {
+            payload.discount = parseFloat(document.getElementById('transactionDiscount').value) || 0;
+        }
+
         if (type === 'purchase') {
             payload.supplier = document.getElementById('transactionSupplier').value;
             payload.cost_price = parseFloat(document.getElementById('transactionCostPrice').value);
@@ -139,8 +184,11 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
             currentTransactionModal.hide(); 
             document.getElementById('transactionSupplier').value = '';
             document.getElementById('transactionCostPrice').value = '';
+            document.getElementById('transactionDiscount').value = 0;
+            document.getElementById('liveTotalDisplay').classList.add('d-none');
             document.getElementById('transactionType').value = 'sale'; 
             document.getElementById('purchaseFields').classList.add('d-none');
+            document.getElementById('discountField').classList.remove('d-none');
             
             loadProducts();         
             loadDashboardSummary();
@@ -394,7 +442,7 @@ async function loadSalesLedger() {
                     <td class="text-start fw-bold text-dark">${sale.item_name}</td>
                     <td class="text-muted">${currencyFormatter.format(sale.unit_price)}</td>
                     <td class="fw-bold text-primary">${sale.qty_sold}</td>
-                    <td class="fw-bold text-success">${currencyFormatter.format(sale.total_sales)}</td>
+                    <td class="fw-bold text-danger">-${currencyFormatter.format(sale.discount)}</td> <td class="fw-bold text-success">${currencyFormatter.format(sale.total_sales)}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary shadow-sm" onclick="attemptEdit(${sale.id}, 'sale', ${sale.qty_sold})">
                             <i class="bi bi-pencil-square"></i>
