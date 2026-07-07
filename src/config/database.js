@@ -69,6 +69,17 @@ const db = new sqlite3.Database('./inventory.sqlite', (err) => {
                 status TEXT DEFAULT 'Unpaid'
             )`);
 
+            // 6. Create Exchanges Table (PHASE 13)
+            db.run(`CREATE TABLE IF NOT EXISTS exchanges (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                returned_item_code TEXT,
+                returned_qty INTEGER,
+                taken_item_code TEXT,
+                taken_qty INTEGER,
+                cash_top_up REAL
+            )`);
+
             console.log('✅ All financial and inventory database tables are ready.');
         });
     }

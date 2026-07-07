@@ -59,7 +59,12 @@
                 </li>
                 <li>
                     <a href="#" id="nav-ar" class="nav-link text-dark d-flex align-items-center gap-3">
-                        <i class="bi bi-wallet2 fs-5 text-secondary"></i> Accounts Receivable
+                        <i class="bi bi-wallet2 fs-5 text-dark"></i> Accounts Receivable
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="nav-exchange" class="nav-link text-dark d-flex align-items-center gap-3">
+                        <i class="bi bi-arrow-repeat fs-5" style="color: var(--bs-pink);"></i></i> Item Exchange
                     </a>
                 </li>
             </ul>
@@ -159,7 +164,10 @@
                             </div>
                         </div>
 
-                    </div> </div> <div class="card shadow-sm border-0 mt-4 border-top border-warning border-4">
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mt-4 border-top border-warning border-4">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                         <h5 class="m-0 fw-bold text-dark"><i class="bi bi-journal-check text-warning me-2"></i>Admin Workspace & Tasks</h5>
                         
@@ -178,7 +186,9 @@
                     </div>
                 </div>
 
-            </div> <div id="view-inventory" class="d-none p-4">
+            </div>
+
+            <div id="view-inventory" class="d-none p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="fw-bold m-0 text-primary"><i class="bi bi-box-seam me-2"></i>Product Management</h4>
                     <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
@@ -376,7 +386,63 @@
                 </div>
             </div>
 
-        </div> </div> <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
+            <div id="view-exchange" class="d-none p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold text-dark"><i class="bi bi-arrow-repeat me-2"></i>Item Return & Exchange</h2>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-danger text-white fw-bold"><i class="bi bi-box-arrow-in-right me-2"></i>Item Returned (By Customer)</div>
+                            <div class="card-body">
+                                <label class="form-label text-muted small fw-bold mt-2">SEARCH ITEM RETURNED</label>
+                                <input type="text" class="form-control" id="returnItemInput" list="exchangeProductList" placeholder="Select returned item..." autocomplete="off">
+                                
+                                <label class="form-label text-muted small fw-bold mt-3">QUANTITY RETURNED</label>
+                                <input type="number" class="form-control" id="returnQtyInput" min="1" value="1">
+                                
+                                <div class="mt-4 p-3 bg-light rounded text-end">
+                                    <span class="text-muted fw-bold">Return Value: </span>
+                                    <h4 class="text-danger fw-bold mb-0" id="returnValueDisplay">₱0.00</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-success text-white fw-bold"><i class="bi bi-box-arrow-right me-2"></i>New Item Taken</div>
+                            <div class="card-body">
+                                <label class="form-label text-muted small fw-bold mt-2">SEARCH ITEM TAKEN</label>
+                                <input type="text" class="form-control" id="takenItemInput" list="exchangeProductList" placeholder="Select taken item..." autocomplete="off">
+                                
+                                <label class="form-label text-muted small fw-bold mt-3">QUANTITY TAKEN</label>
+                                <input type="number" class="form-control" id="takenQtyInput" min="1" value="1">
+                                
+                                <div class="mt-4 p-3 bg-light rounded text-end">
+                                    <span class="text-muted fw-bold">Taken Value: </span>
+                                    <h4 class="text-success fw-bold mb-0" id="takenValueDisplay">₱0.00</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mt-2">
+                    <div class="card-body d-flex justify-content-between align-items-center p-4">
+                        <div id="exchangeStatusMessage" class="fw-bold fs-5 text-muted">Select items to calculate difference...</div>
+                        <button class="btn btn-warning fw-bold px-5 py-2 shadow-sm" id="processExchangeBtn" disabled>Process Exchange</button>
+                    </div>
+                </div>
+
+                <datalist id="exchangeProductList"></datalist>
+            </div>
+
+        </div> 
+    </div> 
+    
+    <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">

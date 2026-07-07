@@ -769,6 +769,214 @@ if (exportSalesBtn) {
     });
 }
 
+// ==========================================
+// UNIVERSAL SIDEBAR NAVIGATION CONTROLLER
+// ==========================================
+document.querySelectorAll('#sidebarNav .nav-link').forEach(link => {
+    // Clone and replace to kill old, conflicting UI clickers
+    const newLink = link.cloneNode(true);
+    link.parentNode.replaceChild(newLink, link);
+    
+    newLink.addEventListener('click', async function(e) {
+        e.preventDefault();
+        
+        // 1. Clean EVERY link: remove active/blue classes and restore dark text
+        document.querySelectorAll('#sidebarNav .nav-link').forEach(l => {
+            l.classList.remove('active', 'bg-primary', 'text-white');
+            l.classList.add('text-dark');
+        });
+        
+        // 2. Turn ON the clicked link: add active and remove dark text
+        this.classList.add('active');
+        this.classList.remove('text-dark');
+        
+        // 3. Update the Top Dashboard Title
+        document.getElementById('pageTitle').innerText = this.innerText.trim();
+
+        // 4. Hide every single view container
+        document.querySelectorAll('[id^="view-"]').forEach(view => {
+            view.classList.add('d-none');
+            view.classList.remove('d-block');
+        });
+
+        // 5. Show exactly the view that matches the button clicked
+        const targetViewId = this.id.replace('nav-', 'view-');
+        const targetView = document.getElementById(targetViewId);
+        if (targetView) {
+            targetView.classList.remove('d-none');
+            targetView.classList.add('d-block');
+        }
+
+        // 6. 🚨 TRIGGER DATA RELOADS: Guarantee tables are never empty! 🚨
+        if (this.id === 'nav-dashboard' && typeof loadDashboardSummary === 'function') { loadDashboardSummary(); if(typeof loadDashboardCharts === 'function') loadDashboardCharts(); }
+        if (this.id === 'nav-inventory' && typeof loadProducts === 'function') loadProducts();
+        if (this.id === 'nav-sales-ledger' && typeof loadSalesLedger === 'function') loadSalesLedger();
+        if (this.id === 'nav-purchase-ledger' && typeof loadPurchaseLedger === 'function') loadPurchaseLedger();
+        if (this.id === 'nav-expenses' && typeof loadExpenses === 'function') loadExpenses();
+        if (this.id === 'nav-ar' && typeof loadAR === 'function') loadAR();
+
+        // 7. If they specifically clicked Item Exchange, load the products list
+        if (this.id === 'nav-exchange') {
+            try {
+                const response = await fetch('/api/products');
+                allProductsData = await response.json();
+                const datalist = document.getElementById('exchangeProductList');
+                datalist.innerHTML = '';
+                allProductsData.forEach(p => {
+                    // Bonus Fix: Hide the Phantom EXCHANGE item from this dropdown too!
+                    if (p.item_code !== 'EXCHANGE') {
+                        datalist.innerHTML += `<option value="${p.item_code}">${p.item_name} (SRP: ₱${p.srp})</option>`;
+                    }
+                });
+            } catch (error) { console.error("Error loading products:", error); }
+        }
+    });
+});
+
+// ==========================================
+// 13. RETURN & EXCHANGE LOGIC
+// ==========================================
+let allProductsData = []; 
+// Link the Sidebar button to the Exchange View
+const navExchangeBtn = document.getElementById('nav-exchange');
+if (navExchangeBtn) {
+    navExchangeBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
+        // --- FIX 1: Change the Top Title ---
+        document.getElementById('pageTitle').innerText = 'Item Return & Exchange';
+
+        // --- FIX 2: Swap Sidebar Active Colors ---
+        // Turn off all other buttons
+        document.querySelectorAll('#sidebarNav .nav-link').forEach(link => {
+            link.classList.remove('active', 'bg-primary', 'text-white');
+            link.classList.add('text-dark');
+        });
+        // Turn ON the Item Exchange button
+        navExchangeBtn.classList.remove('text-dark');
+        navExchangeBtn.classList.add('active', 'text-white', 'bg-primary');
+
+        // 1. Hide every single view safely
+        const allViews = ['view-dashboard', 'view-inventory', 'view-sales-ledger', 'view-purchase-ledger', 'view-master-reports', 'view-expenses', 'view-ar', 'view-exchange'];
+        allViews.forEach(viewId => {
+            const el = document.getElementById(viewId);
+            if (el) {
+                el.classList.add('d-none');
+                el.classList.remove('d-block');
+            }
+        });
+
+        // 2. Show ONLY the Item Exchange view
+        document.getElementById('view-exchange').classList.remove('d-none');
+        document.getElementById('view-exchange').classList.add('d-block');
+
+        // 3. Load the latest products into the Exchange Dropdown
+        try {
+            const response = await fetch('/api/products');
+            allProductsData = await response.json();
+            
+            const datalist = document.getElementById('exchangeProductList');
+            datalist.innerHTML = '';
+            allProductsData.forEach(p => {
+                datalist.innerHTML += `<option value="${p.item_code}">${p.item_name} (SRP: ₱${p.srp})</option>`;
+            });
+        } catch (error) { console.error("Error loading products for exchange:", error); }
+    });
+}
+
+// Live Math Calculator
+function calculateExchangeMath() {
+    const returnCode = document.getElementById('returnItemInput').value;
+    const takenCode = document.getElementById('takenItemInput').value;
+    const returnQty = parseInt(document.getElementById('returnQtyInput').value) || 0;
+    const takenQty = parseInt(document.getElementById('takenQtyInput').value) || 0;
+
+    const returnItem = allProductsData.find(p => p.item_code === returnCode);
+    const takenItem = allProductsData.find(p => p.item_code === takenCode);
+
+    const returnTotal = returnItem ? returnItem.srp * returnQty : 0;
+    const takenTotal = takenItem ? takenItem.srp * takenQty : 0;
+    
+    const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
+    document.getElementById('returnValueDisplay').innerText = currencyFormatter.format(returnTotal);
+    document.getElementById('takenValueDisplay').innerText = currencyFormatter.format(takenTotal);
+
+    const statusMsg = document.getElementById('exchangeStatusMessage');
+    const submitBtn = document.getElementById('processExchangeBtn');
+    const cashDifference = takenTotal - returnTotal;
+
+    // Strict Validation Rule
+    if (!returnItem || !takenItem || returnTotal === 0 || takenTotal === 0) {
+        statusMsg.innerText = "Select valid items to calculate difference...";
+        statusMsg.className = "fw-bold fs-5 text-muted";
+        
+        // Disable the button and let Bootstrap make it gray
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('btn-warning');
+        submitBtn.classList.add('btn-secondary'); 
+    } else if (cashDifference < 0) {
+        statusMsg.innerHTML = `<i class="bi bi-x-circle-fill me-2"></i>Invalid: Store does not refund cash. (Difference: ${currencyFormatter.format(cashDifference)})`;
+        statusMsg.className = "fw-bold fs-5 text-danger";
+        
+        // Disable the button and keep it gray
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('btn-warning');
+        submitBtn.classList.add('btn-secondary');
+    } else {
+        statusMsg.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>Valid: Collect Cash Top-up of <span class="text-success fs-4">${currencyFormatter.format(cashDifference)}</span>`;
+        statusMsg.className = "fw-bold fs-5 text-dark";
+        
+        // Enable the button and make it bright warning yellow!
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('btn-secondary');
+        submitBtn.classList.add('btn-warning');
+        submitBtn.dataset.topUp = cashDifference; 
+    }
+}
+
+// Add event listeners to trigger the calculator instantly when numbers change
+['returnItemInput', 'returnQtyInput', 'takenItemInput', 'takenQtyInput'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calculateExchangeMath);
+});
+
+// Process the Submit
+document.getElementById('processExchangeBtn').addEventListener('click', async () => {
+    const payload = {
+        returned_item_code: document.getElementById('returnItemInput').value,
+        returned_qty: parseInt(document.getElementById('returnQtyInput').value),
+        taken_item_code: document.getElementById('takenItemInput').value,
+        taken_qty: parseInt(document.getElementById('takenQtyInput').value),
+        cash_top_up: parseFloat(document.getElementById('processExchangeBtn').dataset.topUp)
+    };
+
+    if (!confirm(`Confirm Exchange? You must collect ₱${payload.cash_top_up} from the customer.`)) return;
+
+    try {
+        const response = await fetch('/api/exchanges', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            alert("Exchange Processed Successfully!");
+            
+            // Clear the form
+            document.getElementById('returnItemInput').value = '';
+            document.getElementById('takenItemInput').value = '';
+            document.getElementById('returnQtyInput').value = '1';
+            document.getElementById('takenQtyInput').value = '1';
+            calculateExchangeMath();
+            
+            // Refresh systems
+            if (typeof loadProducts === "function") loadProducts();
+        } else {
+            alert("Failed to process exchange. Check inputs and stock limits.");
+        }
+    } catch (error) { console.error("Exchange Error:", error); }
+});
+
 // Initialize the workspace when the app loads
 loadStickyNote();
 // Initialize on page load
