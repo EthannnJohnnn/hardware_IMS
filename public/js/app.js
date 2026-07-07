@@ -1255,7 +1255,6 @@ if (processRepackBtn) {
 
 // Initialize the workspace when the app loads
 loadStickyNote();
-// Initialize on page load
 loadProducts();
 loadDashboardSummary();
 loadDashboardCharts();
