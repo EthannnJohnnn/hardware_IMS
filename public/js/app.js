@@ -921,6 +921,21 @@ document.querySelectorAll('#sidebarNav .nav-link').forEach(link => {
                 });
             } catch (error) { console.error("Error loading products:", error); }
         }
+
+        // 8. If they specifically clicked Repackage, load the products list
+        if (this.id === 'nav-repack') {
+            try {
+                const response = await fetch('/api/products');
+                const products = await response.json();
+                const datalist = document.getElementById('repackProductList');
+                datalist.innerHTML = '';
+                products.forEach(p => {
+                    if (p.item_code !== 'EXCHANGE' && p.item_code !== 'PENALTY') {
+                        datalist.innerHTML += `<option value="${p.item_code}">${p.item_name} (Stock: ${p.current_stock})</option>`;
+                    }
+                });
+            } catch (error) { console.error("Error loading products:", error); }
+        }
     });
 });
 
@@ -1154,6 +1169,50 @@ document.getElementById('saveLedgerEditBtn').addEventListener('click', async () 
         }
     } catch (error) { console.error(error); }
 });
+
+// ==========================================
+// 17. BULK REPACKAGING LOGIC
+// ==========================================
+const processRepackBtn = document.getElementById('processRepackBtn');
+if (processRepackBtn) {
+    processRepackBtn.addEventListener('click', async () => {
+        const payload = {
+            source_item_code: document.getElementById('repackSourceInput').value,
+            source_qty: parseInt(document.getElementById('repackSourceQty').value),
+            result_item_code: document.getElementById('repackResultInput').value,
+            result_qty: parseInt(document.getElementById('repackResultQty').value)
+        };
+
+        if (!payload.source_item_code || !payload.result_item_code) {
+            return alert("Please select both a Source and Result item.");
+        }
+
+        if (!confirm(`Confirm Conversion: Deduct ${payload.source_qty} [${payload.source_item_code}] and Add ${payload.result_qty} [${payload.result_item_code}]?`)) return;
+
+        try {
+            const response = await fetch('/api/repacks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                alert("Inventory successfully repackaged!");
+                
+                // Clear form
+                document.getElementById('repackSourceInput').value = '';
+                document.getElementById('repackResultInput').value = '';
+                document.getElementById('repackSourceQty').value = '1';
+                document.getElementById('repackResultQty').value = '1';
+                
+                // Refresh data
+                if (typeof loadProducts === 'function') loadProducts();
+            } else {
+                alert("Failed to process repackaging. Check inputs.");
+            }
+        } catch (error) { console.error(error); }
+    });
+}
 
 // Initialize the workspace when the app loads
 loadStickyNote();

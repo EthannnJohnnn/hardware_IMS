@@ -86,6 +86,16 @@ const db = new sqlite3.Database('./inventory.sqlite', (err) => {
                 // This just means the upgrade already ran successfully!
             });
 
+            // 7. Create Repacks Table (PHASE 17 - Bulk Breaking)
+            db.run(`CREATE TABLE IF NOT EXISTS repacks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                source_item_code TEXT,
+                source_qty INTEGER,
+                result_item_code TEXT,
+                result_qty INTEGER
+            )`);
+
             console.log('✅ All financial and inventory database tables are ready.');
         });
     }

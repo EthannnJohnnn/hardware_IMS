@@ -59,12 +59,17 @@
                 </li>
                 <li>
                     <a href="#" id="nav-ar" class="nav-link text-dark d-flex align-items-center gap-3">
-                        <i class="bi bi-wallet2 fs-5 text-dark"></i> Accounts Receivable
+                        <i class="bi bi-wallet2 fs-5" style="color: #6f42c1;"></i> Accounts Receivable
                     </a>
                 </li>
                 <li>
                     <a href="#" id="nav-exchange" class="nav-link text-dark d-flex align-items-center gap-3">
-                        <i class="bi bi-arrow-repeat fs-5" style="color: var(--bs-pink);"></i></i> Item Exchange
+                        <i class="bi bi-arrow-repeat fs-5" style="color: var(--bs-orange);"></i></i> Item Exchange
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="nav-repack" class="nav-link text-dark d-flex align-items-center gap-3">
+                        <i class="bi bi-box-seam-fill fs-5" style="color: #8B4513;"></i> Repackage (Bulk)
                     </a>
                 </li>
             </ul>
@@ -441,6 +446,53 @@
                 </div>
 
                 <datalist id="exchangeProductList"></datalist>
+            </div>
+
+            <div id="view-repack" class="d-none p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold text-dark"><i class="bi bi-box-seam-fill me-2"></i>Bulk Repackaging</h2>
+                </div>
+
+                <div class="alert alert-info shadow-sm border-0 fw-bold">
+                    <i class="bi bi-info-circle-fill me-2"></i>Use this tool to convert bulk items (e.g., 1 Box) into retail items (e.g., 20 Kilos). Ensure you have created separate SKUs for both items first!
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-dark text-white fw-bold"><i class="bi bi-box me-2"></i>Source Item (Bulk to Deduct)</div>
+                            <div class="card-body bg-light">
+                                <label class="form-label text-muted small fw-bold mt-2">SEARCH BULK ITEM</label>
+                                <input type="text" class="form-control" id="repackSourceInput" list="repackProductList" placeholder="e.g., NAIL-BOX" autocomplete="off">
+                                
+                                <label class="form-label text-muted small fw-bold mt-3">QUANTITY TO OPEN</label>
+                                <input type="number" class="form-control" id="repackSourceQty" min="1" value="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-primary text-white fw-bold"><i class="bi bi-boxes me-2"></i>Result Item (Retail to Add)</div>
+                            <div class="card-body bg-light">
+                                <label class="form-label text-muted small fw-bold mt-2">SEARCH RETAIL ITEM</label>
+                                <input type="text" class="form-control" id="repackResultInput" list="repackProductList" placeholder="e.g., NAIL-KG" autocomplete="off">
+                                
+                                <label class="form-label text-muted small fw-bold mt-3">QUANTITY YIELDED</label>
+                                <input type="number" class="form-control" id="repackResultQty" min="1" value="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mt-2">
+                    <div class="card-body d-flex justify-content-between align-items-center p-4">
+                        <div class="fw-bold fs-5 text-muted">Verify quantities carefully before processing.</div>
+                        <button class="btn btn-primary fw-bold px-5 py-2 shadow-sm" id="processRepackBtn">Process Repackage</button>
+                    </div>
+                </div>
+
+                <datalist id="repackProductList"></datalist>
             </div>
 
         </div> 
