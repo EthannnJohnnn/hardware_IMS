@@ -26,6 +26,29 @@ const reportController = {
             if (err) return res.status(500).json({ error: "Failed to aggregate purchases" });
             res.json(data);
         });
+    },
+
+    getTopSellers: (req, res) => {
+        // FIXED: Capital R
+        ReportModel.getTopSellers((err, data) => {
+            if (err) {
+                console.error("Error fetching top sellers:", err);
+                return res.status(500).json({ error: "Failed to fetch top sellers" });
+            }
+            res.json(data);
+        });
+    },
+
+    // ✨ NEW Phase 19: Get Worst Sellers
+    getWorstSellers: (req, res) => {
+        // FIXED: Capital R
+        ReportModel.getWorstSellers((err, data) => {
+            if (err) {
+                console.error("Error fetching worst sellers:", err);
+                return res.status(500).json({ error: "Failed to fetch worst sellers" });
+            }
+            res.json(data);
+        });
     }
 };
 

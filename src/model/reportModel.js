@@ -84,6 +84,32 @@ const ReportModel = {
                 });
             });
         });
+    },
+
+    getTopSellers: (callback) => {
+        const sql = `
+            SELECT p.item_name, SUM(s.quantity) AS total_sold
+            FROM sales s
+            JOIN products p ON s.item_code = p.item_code
+            WHERE p.item_name != 'Cash Top-Up (Item Exchange)' 
+            GROUP BY s.item_code
+            ORDER BY total_sold DESC
+            LIMIT 5
+        `;
+        db.all(sql, [], (err, rows) => callback(err, rows));
+    },
+
+    getWorstSellers: (callback) => {
+        const sql = `
+            SELECT p.item_name, COALESCE(SUM(s.quantity), 0) AS total_sold
+            FROM products p
+            LEFT JOIN sales s ON p.item_code = s.item_code
+            WHERE p.item_name != 'Cash Top-Up (Item Exchange)'
+            GROUP BY p.item_code
+            ORDER BY total_sold ASC
+            LIMIT 5
+        `;
+        db.all(sql, [], (err, rows) => callback(err, rows));
     }
     
 };

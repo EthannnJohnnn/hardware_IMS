@@ -172,6 +172,26 @@
                     </div>
                 </div>
 
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm p-3 border-top border-success border-3">
+                            <h6 class="fw-bold text-success"><i class="bi bi-graph-up-arrow"></i> Top 5 Best Sellers</h6>
+                            <ul class="list-group list-group-flush" id="topSellersList">
+                                <li class="list-group-item text-muted">Loading...</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm p-3 border-top border-danger border-3">
+                            <h6 class="fw-bold text-danger"><i class="bi bi-graph-down-arrow"></i> Top 5 Slow Moving (Worst Sellers)</h6>
+                            <ul class="list-group list-group-flush" id="worstSellersList">
+                                <li class="list-group-item text-muted">Loading...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card shadow-sm border-0 mt-4 border-top border-warning border-4">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                         <h5 class="m-0 fw-bold text-dark"><i class="bi bi-journal-check text-warning me-2"></i>Admin Workspace & Tasks</h5>
@@ -198,6 +218,12 @@
                     <h4 class="fw-bold m-0 text-primary"><i class="bi bi-box-seam me-2"></i>Product Management</h4>
                     <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
                         <i class="bi bi-plus-lg me-1"></i>Add New Product
+                    </button>
+                    <button id="btnLowStock" class="btn btn-warning text-dark fw-bold shadow-sm">
+                        <i class="bi bi-exclamation-triangle"></i> Show Low Stock
+                    </button>
+                    <button id="btnAllStock" class="btn btn-secondary shadow-sm d-none">
+                        <i class="bi bi-arrow-counterclockwise"></i> Show All
                     </button>
                 </div>
                 <div class="card shadow-sm border-0 border-top border-info border-4">

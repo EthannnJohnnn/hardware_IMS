@@ -8,5 +8,7 @@ router.get('/daily', reportController.getDaily);
 
 // ✨ NEW STEP 2: The Traffic Cop for the Aggregation API
 router.get('/purchases', reportController.getPurchasesAggregation);
+router.get('/top-sellers', reportController.getTopSellers);
+router.get('/worst-sellers', reportController.getWorstSellers);
 
 module.exports = router;

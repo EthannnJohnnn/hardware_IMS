@@ -3,41 +3,69 @@
 // ==========================================
 // 1. FETCH & RENDER PRODUCTS
 // ==========================================
+let allProductsData = []; 
+
 async function loadProducts() {
     try {
         const response = await fetch('/api/products');
         const products = await response.json();
-        allProductsData = products; // Keep this in sync for the live transaction calculator
+        allProductsData = products; // Keep this in sync for the live transaction calculator & filters
 
         document.getElementById('totalProductsText').innerText = products.length + " Items";
 
-        const tableBody = document.getElementById('productTableBody');
-        tableBody.innerHTML = ''; 
-
-        for (const product of products) {
-            let stockBadge = 'bg-success';
-            if (product.current_stock <= 5) stockBadge = 'bg-warning text-dark';
-            if (product.current_stock === 0) stockBadge = 'bg-danger';
-
-            const row = `
-                <tr>
-                    <td class="fw-bold text-muted">${product.item_code}</td>
-                    <td class="fw-bold">${product.item_name}</td>
-                    <td>₱${product.cost_price.toFixed(2)}</td>
-                    <td>₱${product.srp.toFixed(2)}</td>
-                    <td><span class="badge ${stockBadge}">${product.current_stock}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary fw-bold" 
-                            onclick="openTransactionModal('${product.item_code}', '${product.item_name}', ${product.current_stock})">
-                            Transact
-                        </button>
-                    </td>
-                </tr>
-            `;
-            tableBody.innerHTML += row;
-        }
+        renderInventoryTable(allProductsData);
     } catch (error) { console.error("Error loading products:", error); }
 }
+
+function renderInventoryTable(products) {
+    const tableBody = document.getElementById('productTableBody');
+    tableBody.innerHTML = ''; 
+
+    for (const product of products) {
+        let stockBadge = 'bg-success';
+        if (product.current_stock <= 5) stockBadge = 'bg-warning text-dark';
+        if (product.current_stock === 0) stockBadge = 'bg-danger';
+
+        const row = `
+            <tr>
+                <td class="fw-bold text-muted">${product.item_code}</td>
+                <td class="fw-bold">${product.item_name}</td>
+                <td>₱${product.cost_price.toFixed(2)}</td>
+                <td>₱${product.srp.toFixed(2)}</td>
+                <td><span class="badge ${stockBadge}">${product.current_stock}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary fw-bold" 
+                        onclick="openTransactionModal('${product.item_code}', '${product.item_name}', ${product.current_stock})">
+                        Transact
+                    </button>
+                </td>
+            </tr>
+        `;
+        tableBody.innerHTML += row;
+    }
+}
+
+// ==========================================
+// 1b. LOW STOCK FILTER TOGGLE
+// ==========================================
+document.getElementById('btnLowStock')?.addEventListener('click', () => {
+    // Filter for stock that is 5 or less
+    const lowStock = allProductsData.filter(item => item.current_stock <= 5);
+    renderInventoryTable(lowStock);
+
+    // Toggle the buttons
+    document.getElementById('btnLowStock').classList.add('d-none');
+    document.getElementById('btnAllStock').classList.remove('d-none');
+});
+
+document.getElementById('btnAllStock')?.addEventListener('click', () => {
+    // Bring everything back
+    renderInventoryTable(allProductsData);
+
+    // Toggle the buttons
+    document.getElementById('btnAllStock').classList.add('d-none');
+    document.getElementById('btnLowStock').classList.remove('d-none');
+});
 
 // ==========================================
 // 2. ADD NEW PRODUCT LOGIC
@@ -269,20 +297,21 @@ document.getElementById('nav-ar').addEventListener('click', () => {
 // 5. FINANCIAL MATH & CHART.JS
 // ==========================================
 async function loadDashboardSummary() {
-    console.log("1. Dashboard Summary Function Started!"); // Check your F12 console for this!
+    console.log("1. Dashboard Summary Function Started!"); 
     try {
+        // ==========================================
+        // 1. ORIGINAL SUMMARY DATA (Sales, Profit, COGS)
+        // ==========================================
         const response = await fetch('/api/reports/summary');
         const data = await response.json();
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
 
-        // Safely check if elements exist before updating them!
         const salesText = document.getElementById('totalSalesText');
         if (salesText) salesText.innerText = currencyFormatter.format(data.total_sales || 0);
 
         const profitText = document.getElementById('netProfitText');
         if (profitText) profitText.innerText = currencyFormatter.format(data.net_amount || 0);
 
-        // Fetch Purchases for COGS
         const purchResponse = await fetch('/api/ledger/purchases');
         const purchases = await purchResponse.json();
 
@@ -292,24 +321,51 @@ async function loadDashboardSummary() {
         const cogsText = document.getElementById('totalCogsText');
         if (cogsText) {
             cogsText.innerText = currencyFormatter.format(totalCogsMath);
-            console.log("2. COGS Text Updated to: ", totalCogsMath);
         }
 
-        // 5. Update the Chart with the 7 most recent purchases
         const chartInstance = Chart.getChart("purchaseChart");
         if (chartInstance && purchases.length > 0) {
-            // Grab the last 7 purchases and put them in chronological order
             const recentPurchases = purchases.slice(0, 7).reverse();
-            
-            // Map BOTH the costs (for the dots) and the dates (for the invisible labels)
             const chartData = recentPurchases.map(p => p.total_cost);
-            const chartLabels = recentPurchases.map(p => p.date); // <-- THIS FIXES IT!
+            const chartLabels = recentPurchases.map(p => p.date); 
 
-            // Inject both into the chart so they match perfectly
             chartInstance.data.labels = chartLabels; 
             chartInstance.data.datasets[0].data = chartData;
-            
             chartInstance.update();
+        }
+
+        // ==========================================
+        // ✨ 2. NEW PHASE 19: TOP & WORST SELLERS
+        // ==========================================
+        
+        // Fetch and render Top Sellers
+        const topResponse = await fetch('/api/reports/top-sellers');
+        const topData = await topResponse.json();
+        const topList = document.getElementById('topSellersList');
+        
+        if (topList) {
+            // Map the data into HTML list items
+            topList.innerHTML = topData.map(item => 
+                `<li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${item.item_name} 
+                    <span class="badge bg-success rounded-pill">${item.total_sold} sold</span>
+                </li>`
+            ).join('');
+        }
+
+        // Fetch and render Worst Sellers
+        const worstResponse = await fetch('/api/reports/worst-sellers');
+        const worstData = await worstResponse.json();
+        const worstList = document.getElementById('worstSellersList');
+        
+        if (worstList) {
+            // Map the data into HTML list items
+            worstList.innerHTML = worstData.map(item => 
+                `<li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${item.item_name} 
+                    <span class="badge bg-danger rounded-pill">${item.total_sold} sold</span>
+                </li>`
+            ).join('');
         }
 
     } catch (error) { 
@@ -981,7 +1037,6 @@ document.querySelectorAll('#sidebarNav .nav-link').forEach(link => {
 // ==========================================
 // 13. RETURN & EXCHANGE LOGIC
 // ==========================================
-let allProductsData = []; 
 // Link the Sidebar button to the Exchange View
 const navExchangeBtn = document.getElementById('nav-exchange');
 if (navExchangeBtn) {
