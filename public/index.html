@@ -423,51 +423,57 @@
 
             <div id="view-exchange" class="d-none p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="fw-bold text-dark"><i class="bi bi-arrow-repeat me-2"></i>Item Return & Exchange</h2>
+                    <h2 class="fw-bold text-primary mb-4""><i class="bi bi-arrow-repeat me-2"></i>Item Return & Exchange</h2>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-header bg-danger text-white fw-bold"><i class="bi bi-box-arrow-in-right me-2"></i>Item Returned (By Customer)</div>
-                            <div class="card-body">
-                                <label class="form-label text-muted small fw-bold mt-2">SEARCH ITEM RETURNED</label>
-                                <input type="text" class="form-control" id="returnItemInput" list="exchangeProductList" placeholder="Select returned item..." autocomplete="off">
-                                
-                                <label class="form-label text-muted small fw-bold mt-3">QUANTITY RETURNED</label>
-                                <input type="number" class="form-control" id="returnQtyInput" min="1" value="1">
-                                
-                                <div class="mt-4 p-3 bg-light rounded text-end">
-                                    <span class="text-muted fw-bold">Return Value: </span>
-                                    <h4 class="text-danger fw-bold mb-0" id="returnValueDisplay">₱0.00</h4>
-                                </div>
+                <div class="card border-0 shadow-sm p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6 border-end pe-4">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-box-arrow-in-right me-1"></i> Customer Returns</h6>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">SEARCH RETURNED ITEM</label>
+                                <input type="text" class="form-control bg-light border-0" id="returnItemInput" list="exchangeProductList" placeholder="Select returned item..." autocomplete="off">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">QUANTITY RETURNED</label>
+                                <input type="number" class="form-control bg-light border-0" id="returnQtyInput" min="1" value="1">
+                            </div>
+
+                            <div class="text-end mt-4">
+                                <span class="text-muted small fw-bold text-uppercase">Return Value</span>
+                                <h3 class="text-danger fw-bold mb-0" id="returnValueDisplay">₱0.00</h3>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 ps-4">
+                            <h6 class="fw-bold text-success mb-3"><i class="bi bi-cart-plus me-1"></i> Customer Takes</h6>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">SEARCH TAKEN ITEM</label>
+                                <input type="text" class="form-control bg-light border-0" id="takenItemInput" list="exchangeProductList" placeholder="Select taken item..." autocomplete="off">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">QUANTITY TAKEN</label>
+                                <input type="number" class="form-control bg-light border-0" id="takenQtyInput" min="1" value="1">
+                            </div>
+
+                            <div class="text-end mt-4">
+                                <span class="text-muted small fw-bold text-uppercase">Taken Value</span>
+                                <h3 class="text-success fw-bold mb-0" id="takenValueDisplay">₱0.00</h3>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-md-6 mb-4">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-header bg-success text-white fw-bold"><i class="bi bi-box-arrow-right me-2"></i>New Item Taken</div>
-                            <div class="card-body">
-                                <label class="form-label text-muted small fw-bold mt-2">SEARCH ITEM TAKEN</label>
-                                <input type="text" class="form-control" id="takenItemInput" list="exchangeProductList" placeholder="Select taken item..." autocomplete="off">
-                                
-                                <label class="form-label text-muted small fw-bold mt-3">QUANTITY TAKEN</label>
-                                <input type="number" class="form-control" id="takenQtyInput" min="1" value="1">
-                                
-                                <div class="mt-4 p-3 bg-light rounded text-end">
-                                    <span class="text-muted fw-bold">Taken Value: </span>
-                                    <h4 class="text-success fw-bold mb-0" id="takenValueDisplay">₱0.00</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    <hr class="my-4 text-muted">
 
-                <div class="card border-0 shadow-sm mt-2">
-                    <div class="card-body d-flex justify-content-between align-items-center p-4">
-                        <div id="exchangeStatusMessage" class="fw-bold fs-5 text-muted">Select items to calculate difference...</div>
-                        <button class="btn btn-warning fw-bold px-5 py-2 shadow-sm" id="processExchangeBtn" disabled>Process Exchange</button>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small" id="exchangeStatusMessage"><i class="bi bi-info-circle me-1"></i> Verify quantities and values carefully before processing.</span>
+                        <button class="btn btn-primary fw-bold px-4 shadow-sm py-2" id="processExchangeBtn" disabled>
+                            Process Exchange <i class="bi bi-check2-circle ms-1"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -476,45 +482,52 @@
 
             <div id="view-repack" class="d-none p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="fw-bold text-dark"><i class="bi bi-box-seam-fill me-2"></i>Bulk Repackaging</h2>
+                    <h2 class="fw-bold text-primary mb-0"><i class="bi bi-box-seam-fill me-2"></i>Bulk Repackaging</h2>
                 </div>
 
-                <div class="alert alert-info shadow-sm border-0 fw-bold">
-                    <i class="bi bi-info-circle-fill me-2"></i>Use this tool to convert bulk items (e.g., 1 Box) into retail items (e.g., 20 Kilos). Ensure you have created separate SKUs for both items first!
-                </div>
+                <div class="card border-0 shadow-sm p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="badge bg-info text-dark bg-opacity-25 border border-info px-3 py-2 fw-normal">
+                            <i class="bi bi-info-circle me-1"></i> Ensure separate SKUs exist first
+                        </span>
+                    </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-header bg-dark text-white fw-bold"><i class="bi bi-box me-2"></i>Source Item (Bulk to Deduct)</div>
-                            <div class="card-body bg-light">
-                                <label class="form-label text-muted small fw-bold mt-2">SEARCH BULK ITEM</label>
-                                <input type="text" class="form-control" id="repackSourceInput" list="repackProductList" placeholder="e.g., NAIL-BOX" autocomplete="off">
-                                
-                                <label class="form-label text-muted small fw-bold mt-3">QUANTITY TO OPEN</label>
-                                <input type="number" class="form-control" id="repackSourceQty" min="1" value="1">
+                    <div class="row g-4">
+                        <div class="col-md-6 border-end pe-4">
+                            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-box-arrow-up text-warning me-1"></i> Source Item (Bulk to Deduct)</h6>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">SEARCH BULK ITEM</label>
+                                <input type="text" class="form-control bg-light border-0" id="repackSourceInput" list="repackProductList" placeholder="e.g., NAIL-BOX" autocomplete="off">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">QUANTITY TO OPEN</label>
+                                <input type="number" class="form-control bg-light border-0" id="repackSourceQty" min="1" value="1">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 ps-4">
+                            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-box-arrow-down text-primary me-1"></i> Result Item (Retail to Add)</h6>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">SEARCH RETAIL ITEM</label>
+                                <input type="text" class="form-control bg-light border-0" id="repackResultInput" list="repackProductList" placeholder="e.g., NAIL-KG" autocomplete="off">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">QUANTITY YIELDED</label>
+                                <input type="number" class="form-control bg-light border-0" id="repackResultQty" min="1" value="1">
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-md-6 mb-4">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-header bg-primary text-white fw-bold"><i class="bi bi-boxes me-2"></i>Result Item (Retail to Add)</div>
-                            <div class="card-body bg-light">
-                                <label class="form-label text-muted small fw-bold mt-2">SEARCH RETAIL ITEM</label>
-                                <input type="text" class="form-control" id="repackResultInput" list="repackProductList" placeholder="e.g., NAIL-KG" autocomplete="off">
-                                
-                                <label class="form-label text-muted small fw-bold mt-3">QUANTITY YIELDED</label>
-                                <input type="number" class="form-control" id="repackResultQty" min="1" value="1">
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    <hr class="my-4 text-muted">
 
-                <div class="card border-0 shadow-sm mt-2">
-                    <div class="card-body d-flex justify-content-between align-items-center p-4">
-                        <div class="fw-bold fs-5 text-muted">Verify quantities carefully before processing.</div>
-                        <button class="btn btn-primary fw-bold px-5 py-2 shadow-sm" id="processRepackBtn">Process Repackage</button>
+                    <div class="d-flex justify-content-end">
+                        <button class="btn btn-primary fw-bold px-4 shadow-sm py-2" id="processRepackBtn">
+                            <i class="bi bi-boxes me-1"></i> Process Repackage
+                        </button>
                     </div>
                 </div>
 
