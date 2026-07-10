@@ -116,6 +116,24 @@ const ARModel = {
                 });
             });
         });
+    },
+
+    // ✨ NEW Phase 21: Update Debt Data
+    updateDebt: (id, customer_name, item_taken, qty, base_debt, callback) => {
+        const sql = `
+            UPDATE accounts_receivable 
+            SET customer_name = ?, 
+                item_taken = ?, 
+                qty = ?, 
+                base_debt = ? 
+            WHERE id = ?
+        `;
+        db.run(sql, [customer_name, item_taken, qty, base_debt, id], function(err) {
+            if (err) {
+                return callback(err, null);
+            }
+            callback(null, { updatedRows: this.changes });
+        });
     }
 };
 

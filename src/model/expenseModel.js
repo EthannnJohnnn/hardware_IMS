@@ -26,6 +26,21 @@ const ExpenseModel = {
             }
             return callback(null, rows);
         });
+    },
+
+    // ✨ NEW Phase 21: Update Expense Data
+    updateExpense: (id, description, amount, callback) => {
+        const sql = `
+            UPDATE operating_expenses 
+            SET description = ?, amount = ? 
+            WHERE id = ?
+        `;
+        db.run(sql, [description, amount, id], function(err) {
+            if (err) {
+                return callback(err, null);
+            }
+            callback(null, { updatedRows: this.changes });
+        });
     }
 };
 

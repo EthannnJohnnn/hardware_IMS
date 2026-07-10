@@ -25,6 +25,19 @@ const arController = {
             if (err) return res.status(500).json({ error: "Failed to update debt status" });
             res.json(result);
         });
+    },
+    // Add this inside your existing controller object
+    editDebt: (req, res) => {
+        const { id, customer_name, item_taken, qty, base_debt } = req.body;
+        
+        // We assume arModel.updateDebt will be built in Phase 21
+        arModel.updateDebt(id, customer_name, item_taken, qty, base_debt, (err, data) => {
+            if (err) {
+                console.error("Error updating debt:", err);
+                return res.status(500).json({ error: "Failed to update accounts receivable" });
+            }
+            res.json({ message: "Account Receivable updated successfully" });
+        });
     }
 };
 

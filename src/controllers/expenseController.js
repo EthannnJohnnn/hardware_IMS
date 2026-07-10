@@ -13,6 +13,20 @@ const expenseController = {
             if (err) return res.status(500).json({ error: "Failed to log expense" });
             res.json(result);
         });
+    },
+
+    // Add this inside your existing controller object
+    editExpense: (req, res) => {
+        const { id, description, amount } = req.body;
+        
+        // We assume expenseModel.updateExpense will be built in Phase 21
+        expenseModel.updateExpense(id, description, amount, (err, data) => {
+            if (err) {
+                console.error("Error updating expense:", err);
+                return res.status(500).json({ error: "Failed to update expense" });
+            }
+            res.json({ message: "Expense updated successfully" });
+        });
     }
 };
 

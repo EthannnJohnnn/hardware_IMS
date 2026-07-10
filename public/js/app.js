@@ -38,6 +38,10 @@ function renderInventoryTable(products) {
                         onclick="openTransactionModal('${product.item_code}', '${product.item_name}', ${product.current_stock})">
                         Transact
                     </button>
+                    <button class="btn btn-outline-warning btn-sm px-2 ms-1" 
+                        onclick="openEditModal('${product.item_code}', '${product.item_code}', '${product.item_name}', ${product.cost_price}, ${product.srp})">
+                        ✏️
+                    </button>
                 </td>
             </tr>
         `;
@@ -1265,6 +1269,30 @@ document.getElementById('saveLedgerEditBtn').addEventListener('click', async () 
 });
 
 // ==========================================
+// ✨ PHASE 22: EDIT PRODUCT DETAILS MODAL ✨
+// ==========================================
+// Opens the inventory edit modal and pre-fills it with the clicked row's data.
+// Uses item_code as the identifier (not product.id) to stay consistent with
+// how every other function in this file (openTransactionModal, calculateLiveTotal,
+// calculateExchangeMath, etc.) already looks products up.
+// ✨ Phase 22: Open the Modal (Fixed parameter order)
+function openEditModal(original_code, current_code, name, cost, srp) {
+    // 1. Inject the data into the Modal input boxes
+    document.getElementById('edit-item-id').value = original_code;
+    document.getElementById('edit-item-code').value = current_code;
+    document.getElementById('edit-item-name').value = name;
+    document.getElementById('edit-cost-price').value = cost;
+    document.getElementById('edit-srp').value = srp;
+    
+    // 2. Clear out the PIN box so it's fresh every time
+    document.getElementById('edit-admin-pin').value = "";
+    
+    // 3. Show the Modal using Bootstrap's JS
+    const editModal = new bootstrap.Modal(document.getElementById('editInventoryModal'));
+    editModal.show();
+}
+
+// ==========================================
 // 17. BULK REPACKAGING LOGIC
 // ==========================================
 const processRepackBtn = document.getElementById('processRepackBtn');
@@ -1306,6 +1334,57 @@ if (processRepackBtn) {
             }
         } catch (error) { console.error(error); }
     });
+}
+
+// ==========================================
+// ✨ PHASE 23: SUBMIT INVENTORY EDITS (SECURE)
+// ==========================================
+// ==========================================
+// ✨ PHASE 23: SUBMIT INVENTORY EDITS (FIXED)
+// ==========================================
+async function submitInventoryEdit() {
+    // 1. Grab the ORIGINAL item code from the hidden box
+    const original_item_code = document.getElementById('edit-item-id').value;
+    
+    // 2. Grab the potentially newly-typed values
+    const item_code = document.getElementById('edit-item-code').value;
+    const item_name = document.getElementById('edit-item-name').value;
+    const cost_price = parseFloat(document.getElementById('edit-cost-price').value);
+    const srp = parseFloat(document.getElementById('edit-srp').value);
+    const pin = document.getElementById('edit-admin-pin').value;
+
+    if (!pin) return alert("⚠️ Please enter the Admin PIN to authorize changes.");
+
+    // 3. Package it all up (including the original code!)
+    const payload = { 
+        original_item_code: original_item_code, 
+        item_code: item_code, 
+        item_name: item_name, 
+        cost_price: cost_price, 
+        srp: srp, 
+        pin: pin 
+    };
+
+    try {
+        const response = await fetch('/api/products/edit', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('editInventoryModal')).hide();
+            document.getElementById('edit-admin-pin').value = '';
+            loadProducts(); // Table refreshes instantly!
+        } else {
+            alert("🛑 " + (data.error || "Failed to update item."));
+        }
+    } catch (error) { 
+        console.error("Error updating inventory:", error); 
+        alert("System Error. Check console.");
+    }
 }
 
 // Initialize the workspace when the app loads
