@@ -35,6 +35,11 @@
     --text-main: #334155;
     --text-muted: #64748b;
 
+    /* Layout constants (used to offset the fixed sidebar/navbar) */
+    --sidebar-width: 280px;
+    --navbar-height: 72px;
+    --navbar-gap: 1.25rem;
+
     /* Depth Hierarchy (Elevated SaaS Shadows) */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
@@ -50,6 +55,10 @@
 }
 
 /* Base Optimization */
+html, body {
+    height: 100%;
+}
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-app);
@@ -59,12 +68,15 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* The content column now sits to the right of the fixed sidebar.
+   Everything scrolls normally with the page — only the sidebar
+   and navbar are pinned. */
 #main-content {
     flex-grow: 1;
-    padding: 1.5rem 2.5rem 2.5rem 2.5rem;
+    margin-left: var(--sidebar-width);
+    padding: var(--navbar-gap) 2.5rem 2.5rem 2.5rem;
     background-color: var(--bg-app);
     min-height: 100vh;
-    overflow-x: hidden;
 }
 
 /* Respect users who've asked for less motion */
@@ -88,42 +100,62 @@ select:focus-visible,
 }
 
 /* ==========================================================================
-   2. THE SIDEBAR (PREMIUM SLATE OVERLAY)
+   2. THE SIDEBAR (PINNED, MODERN GLASS RAIL)
    ========================================================================== */
 #sidebar {
-    min-height: 100vh;
-    background: linear-gradient(180deg, var(--slate-50) 0%, var(--slate-100) 100%);
-    border-right: 1px solid var(--border-smooth);
-    width: 280px;
-    min-width: 280px; /* Force it to stay exactly 280px */
-    flex-shrink: 0;   /* Never squish this */
-    position: sticky;
+    /* Pinned to the viewport instead of relying on sticky (which breaks the
+       moment any ancestor gets overflow/height rules). Fixed is bullet-proof. */
+    position: fixed;
     top: 0;
-    z-index: 100;
-    /* THE FIX: real padding so the logo/nav aren't glued to the edges */
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1000;
+
+    background: linear-gradient(180deg, #ffffff 0%, var(--slate-50) 100%);
+    border-right: 1px solid var(--border-smooth);
+    box-shadow: 1px 0 0 rgba(15, 23, 42, 0.02), 8px 0 24px -12px rgba(15, 23, 42, 0.08);
     padding: 1.5rem 1.25rem;
+}
+
+/* Slim custom scrollbar just for the rail, so a tall nav list doesn't
+   fight the premium scrollbar styling used elsewhere */
+#sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+#sidebar::-webkit-scrollbar-thumb {
+    background: var(--slate-200);
+    border-radius: 100px;
 }
 
 /* ---- Brand block (logo) ---- */
 .sidebar-brand {
-    padding: 0 0.25rem;
+    padding: 0.25rem 0.25rem 1.25rem 0.25rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-smooth);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .sidebar-brand .brand-icon-wrap {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-    box-shadow: 0 6px 14px -4px rgba(79, 70, 229, 0.45);
+    background: linear-gradient(135deg, var(--primary) 0%, #6366f1 55%, var(--primary-hover) 100%);
+    box-shadow: 0 8px 18px -6px rgba(79, 70, 229, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .sidebar-brand .brand-icon-wrap i {
     color: #fff;
-    font-size: 1.15rem;
+    font-size: 1.2rem;
 }
 
 .sidebar-brand h4 {
@@ -143,62 +175,110 @@ select:focus-visible,
     text-transform: uppercase;
 }
 
+/* Optional section labels above nav groups, e.g. "MAIN" / "REPORTS" —
+   safe to leave unused if the markup doesn't have them. */
+.sidebar-section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--slate-400);
+    padding: 1rem 0.9rem 0.4rem;
+}
+
 .nav-pills .nav-link {
+    position: relative;
     border-radius: 12px;
     font-weight: 500;
     color: var(--text-muted) !important;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
     transition: transform var(--transition-interactive), 
                 background-color var(--transition-fast), 
                 color var(--transition-fast), 
                 box-shadow var(--transition-fast);
-    padding: 12px 18px;
+    padding: 12px 16px;
+    margin-bottom: 2px;
 }
 
 /* Sidebar Micro-Interactions */
 .nav-pills .nav-link i {
     transition: transform var(--transition-interactive);
+    font-size: 1.05rem;
+    width: 20px;
+    text-align: center;
 }
 
 .nav-pills .nav-link:hover {
     background-color: var(--bg-surface);
     color: var(--primary) !important;
-    transform: translateX(6px);
+    transform: translateX(4px);
     box-shadow: var(--shadow-sm);
 }
 
 .nav-pills .nav-link:hover i {
-    transform: scale(1.18) rotate(3deg);
+    transform: scale(1.15) rotate(3deg);
 }
 
-/* Active State: Vibrant Pop with Deep Glow */
+/* Active State: Vibrant Pop with Deep Glow + a left indicator bar so the
+   active item reads instantly even at a glance while scrolling the list */
 .nav-pills .nav-link.active {
-    background-color: var(--primary) !important;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%) !important;
     color: var(--bg-surface) !important;
-    box-shadow: 0 8px 16px -4px rgba(79, 70, 229, 0.35);
-    transform: translateX(4px);
+    box-shadow: 0 10px 20px -6px rgba(79, 70, 229, 0.45);
+    transform: translateX(2px);
+}
+
+.nav-pills .nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: -1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 22px;
+    border-radius: 0 4px 4px 0;
+    background: var(--primary-hover);
 }
 
 .nav-pills .nav-link.active i {
     color: var(--bg-surface) !important;
+    transform: none;
 }
 
 /* ==========================================================================
-   3. GLOBAL NAVBAR REDESIGN (FADED MINIMALISM)
+   3. GLOBAL NAVBAR REDESIGN (PINNED, FLOATING GLASS BAR)
    ========================================================================== */
 .navbar {
-    background: linear-gradient(135deg, rgba(238, 242, 255, 0.7) 0%, rgba(255, 255, 255, 0.8) 100%) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(224, 231, 255, 0.6);
-    border-radius: 16px !important;
-    box-shadow: var(--shadow-sm) !important;
-    padding: 1rem 1.5rem !important;
+    position: sticky;
+    top: var(--navbar-gap);
+    z-index: 900;
+
+    background: linear-gradient(135deg, rgba(238, 242, 255, 0.75) 0%, rgba(255, 255, 255, 0.85) 100%) !important;
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(224, 231, 255, 0.7);
+    border-radius: 18px !important;
+    box-shadow: var(--shadow-md) !important;
+    padding: 0.9rem 1.5rem !important;
+    transition: box-shadow var(--transition-normal), background-color var(--transition-normal);
+}
+
+/* Once real content scrolls up underneath, give the bar a touch more lift
+   so it visibly separates from the page. Toggle this class from JS with a
+   simple `window.scrollY > 8` listener for the full effect; the bar still
+   looks correct without it. */
+.navbar.is-scrolled {
+    box-shadow: var(--shadow-lg) !important;
+    border-color: rgba(203, 213, 225, 0.9);
 }
 
 /* Dynamic Input Focus Ring */
 .navbar input[type="search"] {
     transition: all var(--transition-normal);
     border: 1px solid transparent !important;
+    border-radius: 10px;
 }
 
 .navbar input[type="search"]:focus {
@@ -219,10 +299,10 @@ select:focus-visible,
 }
 
 .navbar-user .avatar {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, #6366f1 55%, var(--primary-hover) 100%);
     color: #fff;
     display: flex;
     align-items: center;
@@ -230,6 +310,7 @@ select:focus-visible,
     font-weight: 700;
     font-size: 0.85rem;
     flex-shrink: 0;
+    box-shadow: 0 0 0 3px var(--bg-surface), 0 0 0 4px rgba(79, 70, 229, 0.25);
 }
 
 .navbar-user .user-name {
@@ -258,12 +339,13 @@ select:focus-visible,
     color: var(--text-muted);
     font-size: 1.1rem;
     flex-shrink: 0;
-    transition: color var(--transition-fast), box-shadow var(--transition-fast);
+    transition: color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-interactive);
 }
 
 .notif-bell:hover {
     color: var(--primary);
     box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
 .notif-bell::after {
