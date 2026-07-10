@@ -266,6 +266,7 @@
                                     <th>Qty Sold</th>
                                     <th>Discount</th>
                                     <th>Total Sales</th>
+                                    <th>Edit</th>
                                 </tr>
                             </thead>
                             <tbody id="salesLedgerTableBody"></tbody>
@@ -295,6 +296,7 @@
                                     <th>Qty Purchased</th>
                                     <th>Total Cost</th>
                                     <th>Supplier</th>
+                                    <th>Edit</th>
                                 </tr>
                             </thead>
                             <tbody id="purchaseLedgerTableBody"></tbody>
@@ -590,8 +592,9 @@
                             <option value="sale">Sale (Record Revenue & Deduct Stock)</option>
                             <option value="purchase">Purchase (Record Cost & Add Stock)</option>
                             <option disabled>──────────</option>
+                            <option value="beginning_inventory">Beginning Inventory (Add Initial Stock)</option>
                             <option value="transfer_out">Branch Transfer Out (Deduct Stock ONLY)</option>
-                            <option value="transfer_in">Branch Transfer In / Beginning Inventory (Add Stock ONLY)</option>
+                            <option value="transfer_in">Branch Transfer In (Add Stock ONLY)</option>
                         </select>
                     </div>
                     <div class="mb-3">

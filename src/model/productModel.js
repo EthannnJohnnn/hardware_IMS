@@ -20,23 +20,24 @@ const ProductModel = {
         });
     },
 
-    // ✨ THE NEW TRANSFER LOGIC IS HERE ✨
+    // ✨ THE NEW TRANSFER & INVENTORY LOGIC ✨
     adjustStock: (item_code, action, qty, callback) => {
         if (action === 'transfer_out') {
             db.run(`UPDATE products SET current_stock = current_stock - ? WHERE item_code = ?`, [qty, item_code], function(err) {
                 if (err) return callback(err, null);
                 callback(null, { message: "Stock transferred out." });
             });
-        } else if (action === 'transfer_in') {
+        } else if (action === 'transfer_in' || action === 'beginning_inventory') {
+            // ✨ Treat Beginning Inventory exactly like Transfer In (adds stock, costs nothing!)
             db.run(`UPDATE products SET current_stock = current_stock + ? WHERE item_code = ?`, [qty, item_code], function(err) {
                 if (err) return callback(err, null);
-                callback(null, { message: "Stock transferred in." });
+                callback(null, { message: "Stock increased successfully." });
             });
         }
     },
 
-    // ✨ PHASE 21: UPDATE PRODUCT MODEL ✨
-    // ✨ PHASE 21: UPDATE PRODUCT MODEL (FIXED FOR ITEM_CODE) ✨
+
+    // PHASE 21: UPDATE PRODUCT MODEL (FIXED FOR ITEM_CODE) 
     updateProduct: (original_item_code, item_code, item_name, cost_price, srp, callback) => {
         const sql = `
             UPDATE products 
