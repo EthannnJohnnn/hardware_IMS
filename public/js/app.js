@@ -38,9 +38,10 @@ function renderInventoryTable(products) {
                         onclick="openTransactionModal('${product.item_code}', '${product.item_name}', ${product.current_stock})">
                         Transact
                     </button>
-                    <button class="btn btn-outline-warning btn-sm px-2 ms-1" 
-                        onclick="openEditModal('${product.item_code}', '${product.item_code}', '${product.item_name}', ${product.cost_price}, ${product.srp})">
-                        ✏️
+                    
+                    <button class="btn btn-sm btn-outline-primary shadow-sm px-3 ms-1" 
+                            onclick="openEditModal('${product.item_code}', '${product.item_code}', '${product.item_name}', ${product.cost_price}, ${product.srp})">
+                        <i class="bi bi-pencil-square"></i>
                     </button>
                 </td>
             </tr>
@@ -599,7 +600,14 @@ async function loadExpenses() {
                 <tr>
                     <td class="text-muted fw-bold">${exp.expense_date}</td>
                     <td class="fw-bold">${exp.description}</td>
-                    <td class="text-danger fw-bold">-${currencyFormatter.format(exp.amount)}</td>
+                    <td class="text-danger fw-bold d-flex justify-content-between align-items-center">
+                        -${currencyFormatter.format(exp.amount)}
+                        
+                        <button class="btn btn-sm btn-outline-primary shadow-sm px-3" 
+                                onclick="openEditExpenseModal(${exp.id}, '${exp.description}', ${exp.amount})">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                    </td>
                 </tr>
             `;
             tableBody.innerHTML += row;
@@ -665,11 +673,25 @@ async function loadAR() {
                     <td class="fw-bold text-danger fs-6">${currencyFormatter.format(ar.total_due)}</td>
                     <td>
                         <span class="badge ${ar.status === 'Paid' ? 'bg-success' : 'bg-danger shadow-sm'}">${ar.status}</span>
-                    </td>
+                    </td>   
                     <td>
                         ${ar.status === 'Unpaid' 
-                            ? `<button class="btn btn-sm btn-success shadow-sm fw-bold px-3" onclick="settleCustomerDebt(${ar.id}, ${ar.total_due})"><i class="bi bi-cash me-1"></i>Settle</button>` 
-                            : `<i class="bi bi-check-all text-success fs-5"></i>`}
+                            ? `<div class="d-flex align-items-center flex-nowrap gap-2">
+                                <button class="btn btn-sm btn-outline-success shadow-sm px-3" onclick="settleCustomerDebt(${ar.id}, ${ar.total_due})" title="Settle Debt">
+                                    <i class="bi bi-cash"></i>
+                                </button>
+                                
+                                <button class="btn btn-sm btn-outline-primary shadow-sm px-3" onclick="openEditArModal(${ar.id}, '${ar.customer_name}', '${ar.item_name}', ${ar.quantity}, ${ar.base_debt})" title="Edit Record">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                            </div>` 
+                            : `<div class="d-flex align-items-center flex-nowrap gap-2">
+                                <i class="bi bi-check-all text-success fs-5 px-1"></i>
+                                
+                                <button class="btn btn-sm btn-outline-primary shadow-sm px-3" onclick="openEditArModal(${ar.id}, '${ar.customer_name}', '${ar.item_name}', ${ar.quantity}, ${ar.base_debt})" title="Edit Record">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                            </div>`}
                     </td>
                 </tr>
             `;
@@ -1386,6 +1408,88 @@ async function submitInventoryEdit() {
         alert("System Error. Check console.");
     }
 }
+
+// ==========================================
+// ✨ PHASE 23: SECURE EDIT FOR EXPENSES & AR
+// ==========================================
+
+// --- EXPENSES LOGIC ---
+function openEditExpenseModal(id, desc, amount) {
+    document.getElementById('edit-exp-id').value = id;
+    document.getElementById('edit-exp-desc').value = desc;
+    document.getElementById('edit-exp-amount').value = amount;
+    document.getElementById('edit-exp-pin').value = '';
+    new bootstrap.Modal(document.getElementById('editExpenseModal')).show();
+}
+
+async function submitExpenseEdit() {
+    const payload = {
+        id: document.getElementById('edit-exp-id').value,
+        description: document.getElementById('edit-exp-desc').value,
+        amount: parseFloat(document.getElementById('edit-exp-amount').value),
+        pin: document.getElementById('edit-exp-pin').value
+    };
+
+    if (!payload.pin) return alert("⚠️ Admin PIN Required.");
+
+    try {
+        const response = await fetch('/api/expenses/edit', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('editExpenseModal')).hide();
+            loadExpenses();
+            if(typeof loadDashboardSummary === 'function') loadDashboardSummary();
+            if(typeof loadDashboardCharts === 'function') loadDashboardCharts();
+        } else {
+            alert("🛑 " + (data.error || "Failed to update expense."));
+        }
+    } catch (error) { console.error(error); alert("System Error."); }
+}
+
+// --- ACCOUNTS RECEIVABLE LOGIC ---
+function openEditArModal(id, name, item, qty, debt) {
+    document.getElementById('edit-ar-id').value = id;
+    document.getElementById('edit-ar-name').value = name;
+    document.getElementById('edit-ar-item').value = item;
+    document.getElementById('edit-ar-qty').value = qty;
+    document.getElementById('edit-ar-debt').value = debt;
+    document.getElementById('edit-ar-pin').value = '';
+    new bootstrap.Modal(document.getElementById('editArModal')).show();
+}
+
+async function submitArEdit() {
+    const payload = {
+        id: document.getElementById('edit-ar-id').value,
+        customer_name: document.getElementById('edit-ar-name').value,
+        item_taken: document.getElementById('edit-ar-item').value,
+        qty: parseInt(document.getElementById('edit-ar-qty').value),
+        base_debt: parseFloat(document.getElementById('edit-ar-debt').value),
+        pin: document.getElementById('edit-ar-pin').value
+    };
+
+    if (!payload.pin) return alert("⚠️ Admin PIN Required.");
+
+    try {
+        const response = await fetch('/api/ar/edit', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('editArModal')).hide();
+            loadAR();
+        } else {
+            alert("🛑 " + (data.error || "Failed to update AR."));
+        }
+    } catch (error) { console.error(error); alert("System Error."); }
+}   
 
 // Initialize the workspace when the app loads
 loadStickyNote();
