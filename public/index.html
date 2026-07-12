@@ -612,14 +612,23 @@
                         <h4 class="text-success fw-bold mb-0" id="liveTotalAmount">₱0.00</h4>
                     </div>
 
-                    <div id="purchaseFields" class="d-none bg-light p-3 rounded border">
+                    <!-- Purchase-specific fields -->
+                    <div id="purchaseFields" class="d-none">
                         <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold">Supplier Name</label>
+                            <label class="form-label text-muted small">Supplier Name</label>
                             <input type="text" class="form-control" id="transactionSupplier">
                         </div>
-                        <div class="mb-0">
-                            <label class="form-label text-muted small fw-bold">Cost Price (₱) for this batch</label>
-                            <input type="number" step="0.01" class="form-control" id="transactionCostPrice">
+                        <div class="mb-3">
+                            <!-- ✨ Fixed Label: Now says "per item" -->
+                            <label class="form-label text-muted small">Cost Price (₱) <span class="text-primary fw-bold">per item</span></label>
+                            <!-- ✨ Added oninput so it calculates while she types -->
+                            <input type="number" class="form-control" id="transactionCostPrice" step="0.01" oninput="calculateLiveTotal()">
+                        </div>
+                        
+                        <!-- ✨ NEW: Live Total Display Box -->
+                        <div id="purchaseTotalDisplay" class="p-3 mb-3 bg-success bg-opacity-10 border border-success rounded text-end d-none">
+                            <span class="text-success fw-bold small text-uppercase float-start mt-1">Total Purchase Cost:</span>
+                            <h5 class="text-success fw-bold mb-0">₱<span id="purchaseTotalAmount">0.00</span></h5>
                         </div>
                     </div>
                 </div>

@@ -41,18 +41,21 @@ const TransactionModel = {
 
     // --- FUNCTION 2: Record a Purchase/Restock (Adds to stock) ---
     // 'purchaseData' will contain { item_code: "AB-001", quantity: 50, cost_price: 100, supplier: "Hardware Inc" }
+    // --- FUNCTION 2: Record a Purchase/Restock (Adds to stock) ---
     recordPurchase: (purchaseData, callback) => {
         
-        // PHASE 4 UPDATE: Added cost_price and supplier to the INSERT statement
+        // We leave the column name as cost_price so we don't break your database table,
+        // but we will inject the calculated TOTAL cost into it!
         const insertPurchaseQuery = `
             INSERT INTO purchases (item_code, quantity, cost_price, supplier) 
             VALUES (?, ?, ?, ?)
         `;
 
+        // ✨ PHASE 25 UPDATE: Catch the total_price from the frontend!
         const values = [
             purchaseData.item_code, 
             purchaseData.quantity, 
-            purchaseData.cost_price, 
+            purchaseData.total_price, // 👈 THE MAGIC FIX IS HERE (₱1,500)
             purchaseData.supplier
         ];
 
@@ -62,7 +65,7 @@ const TransactionModel = {
                 return callback(err, null);
             }
 
-            // Step B: Update the product's stock (Same as before)
+            // Step B: Update the product's stock
             const updateStockQuery = `UPDATE products SET current_stock = current_stock + ? WHERE item_code = ?`;
 
             db.run(updateStockQuery, [purchaseData.quantity, purchaseData.item_code], function(err) {

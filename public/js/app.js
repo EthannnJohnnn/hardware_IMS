@@ -195,8 +195,15 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
 
         if (type === 'purchase') {
             payload.supplier = document.getElementById('transactionSupplier').value;
-            payload.cost_price = parseFloat(document.getElementById('transactionCostPrice').value);
-            if (!payload.supplier || !payload.cost_price) return alert("Please enter Supplier and Cost Price.");
+            
+            // 1. Grab the cost for ONE item
+            const perItemCost = parseFloat(document.getElementById('transactionCostPrice').value);
+            
+            if (!payload.supplier || !perItemCost) return alert("Please enter Supplier and Cost Price.");
+
+            // ✨ PHASE 25: The Auto-Calculation
+            payload.cost_price = perItemCost; // We keep this just in case your backend updates the main item cost
+            payload.total_price = quantity * perItemCost; // 5 hammers x ₱300 = ₱1,500!
         }
     } 
     // ✨ NEW: Stock Adjustments (Branch Transfers) ✨
@@ -222,6 +229,7 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
             document.getElementById('transactionType').value = 'sale'; 
             document.getElementById('purchaseFields').classList.add('d-none');
             document.getElementById('discountField').classList.remove('d-none');
+            document.getElementById('purchaseTotalDisplay').classList.add('d-none');
             
             loadProducts();         
             loadDashboardSummary();
@@ -1490,6 +1498,33 @@ async function submitArEdit() {
         }
     } catch (error) { console.error(error); alert("System Error."); }
 }   
+
+// ✨ PHASE 25: Live UI Calculator for Purchases
+function calculateLiveTotal() {
+    const type = document.getElementById('transactionType').value;
+    
+    // Only do the math if they are buying stock
+    if (type === 'purchase') {
+        const qty = parseInt(document.getElementById('transactionQuantity').value) || 0;
+        const cost = parseFloat(document.getElementById('transactionCostPrice').value) || 0;
+        
+        // Multiply them
+        const total = qty * cost;
+        
+        const displayBox = document.getElementById('purchaseTotalDisplay');
+        const amountSpan = document.getElementById('purchaseTotalAmount');
+        
+        // If they typed numbers, show the green total box!
+        if (cost > 0 && qty > 0) {
+            displayBox.classList.remove('d-none');
+            // Format to standard currency (e.g., 1,500.00)
+            amountSpan.innerText = total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else {
+            // Hide it if the boxes are empty
+            displayBox.classList.add('d-none');
+        }
+    }
+}
 
 // Initialize the workspace when the app loads
 loadStickyNote();
