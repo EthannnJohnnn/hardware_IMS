@@ -550,11 +550,17 @@ async function loadSalesLedger() {
                     <td class="text-start fw-bold text-dark">${sale.item_name}</td>
                     <td class="text-muted">${currencyFormatter.format(sale.unit_price)}</td>
                     <td class="fw-bold text-primary">${sale.qty_sold}</td>
-                    <td class="fw-bold text-danger">-${currencyFormatter.format(sale.discount)}</td> <td class="fw-bold text-success">${currencyFormatter.format(sale.total_sales)}</td>
+                    <td class="fw-bold text-danger">-${currencyFormatter.format(sale.discount)}</td> 
+                    <td class="fw-bold text-success">${currencyFormatter.format(sale.total_sales)}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary shadow-sm" onclick="attemptEdit(${sale.id}, 'sale', ${sale.qty_sold})">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
+                        <div class="btn-group btn-group-sm shadow-sm" role="group">
+                            <button class="btn btn-outline-primary px-3" onclick="attemptEdit(${sale.id}, 'sale', ${sale.qty_sold})">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-outline-danger px-3" onclick="openDeleteLedgerModal('sale', ${sale.id}, '${sale.item_code}', ${sale.qty_sold})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -583,9 +589,15 @@ async function loadPurchaseLedger() {
                     <td class="fw-bold text-danger">${currencyFormatter.format(purchase.total_cost)}</td>
                     <td class="text-muted fw-bold">${purchase.supplier}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary shadow-sm" onclick="attemptEdit(${purchase.id}, 'purchase', ${purchase.qty_purchased}, ${purchase.cost_price}, '${purchase.supplier}')">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
+                        <!-- ✨ PHASE 26: Button Group with Edit and Secure Delete -->
+                        <div class="btn-group btn-group-sm shadow-sm" role="group">
+                            <button class="btn btn-outline-primary px-3" onclick="attemptEdit(${purchase.id}, 'purchase', ${purchase.qty_purchased}, ${purchase.cost_price}, '${purchase.supplier}')">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-outline-danger px-3" onclick="openDeleteLedgerModal('purchase', ${purchase.id}, '${purchase.item_code}', ${purchase.qty_purchased})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -1523,6 +1535,62 @@ function calculateLiveTotal() {
             // Hide it if the boxes are empty
             displayBox.classList.add('d-none');
         }
+    }
+}
+
+// ==========================================
+// ✨ PHASE 26: SECURE LEDGER DELETIONS
+// ==========================================
+
+function openDeleteLedgerModal(type, id, itemCode, qty) {
+    document.getElementById('delete-ledger-type').value = type;
+    document.getElementById('delete-ledger-id').value = id;
+    document.getElementById('delete-ledger-item').value = itemCode;
+    document.getElementById('delete-ledger-qty').value = qty;
+    document.getElementById('delete-ledger-pin').value = '';
+    
+    new bootstrap.Modal(document.getElementById('deleteLedgerModal')).show();
+}
+
+async function submitLedgerDelete() {
+    const type = document.getElementById('delete-ledger-type').value;
+    const payload = {
+        id: document.getElementById('delete-ledger-id').value,
+        item_code: document.getElementById('delete-ledger-item').value,
+        qty: parseInt(document.getElementById('delete-ledger-qty').value),
+        pin: document.getElementById('delete-ledger-pin').value
+    };
+
+    if (!payload.pin) return alert("⚠️ Admin PIN Required.");
+
+    // Route it to the correct API endpoint
+    const endpoint = type === 'sale' ? '/api/transactions/sale' : '/api/transactions/purchase';
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('deleteLedgerModal')).hide();
+            
+            // Refresh the specific ledger that was changed
+            if (type === 'sale' && typeof loadSales === 'function') loadSales();
+            if (type === 'purchase' && typeof loadPurchases === 'function') loadPurchases();
+            
+            // Refresh global data to show the reversed stock and new totals
+            if(typeof loadProducts === 'function') loadProducts(); 
+            if(typeof loadDashboardSummary === 'function') loadDashboardSummary();
+        } else {
+            alert("🛑 " + (data.error || "Failed to delete record."));
+        }
+    } catch (error) { 
+        console.error("System Error:", error); 
+        alert("System Error. Check console."); 
     }
 }
 

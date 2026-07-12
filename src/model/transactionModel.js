@@ -77,6 +77,36 @@ const TransactionModel = {
                 return callback(null, { message: "Purchase recorded and stock increased successfully!" });
             });
         });
+    },
+
+    // --- FUNCTION 3: Delete a Sale (Restores Stock) ---
+    deleteSale: (data, callback) => {
+        // Step A: Delete the record from the ledger
+        db.run(`DELETE FROM sales WHERE id = ?`, [data.id], function(err) {
+            if (err) return callback(err, null);
+
+            // Step B: Put the items BACK into inventory (current_stock + qty)
+            const restoreStockQuery = `UPDATE products SET current_stock = current_stock + ? WHERE item_code = ?`;
+            db.run(restoreStockQuery, [data.qty, data.item_code], function(err) {
+                if (err) return callback(err, null);
+                return callback(null, { message: "Sale deleted and stock restored!" });
+            });
+        });
+    },
+
+    // --- FUNCTION 4: Delete a Purchase (Deducts Stock) ---
+    deletePurchase: (data, callback) => {
+        // Step A: Delete the record from the ledger
+        db.run(`DELETE FROM purchases WHERE id = ?`, [data.id], function(err) {
+            if (err) return callback(err, null);
+
+            // Step B: Remove the items from inventory (current_stock - qty)
+            const revertStockQuery = `UPDATE products SET current_stock = current_stock - ? WHERE item_code = ?`;
+            db.run(revertStockQuery, [data.qty, data.item_code], function(err) {
+                if (err) return callback(err, null);
+                return callback(null, { message: "Purchase deleted and stock reverted!" });
+            });
+        });
     }
 };
 
