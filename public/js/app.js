@@ -533,9 +533,9 @@ document.getElementById('chartTimeframe').addEventListener('change', (event) => 
 // ==========================================
 // 6. OTHER DATA LOADERS (LEDGERS & REPORTS)
 // ==========================================
-async function loadSalesLedger() {
+async function loadSalesLedger(filter = 'all') {
     try {
-        const response = await fetch('/api/ledger/sales');
+        const response = await fetch(`/api/ledger/sales?filter=${filter}`);
         const sales = await response.json();
         const tableBody = document.getElementById('salesLedgerTableBody');
         if(!tableBody) return;
@@ -569,9 +569,9 @@ async function loadSalesLedger() {
     } catch (error) { console.error("Error loading sales ledger:", error); }
 }
 
-async function loadPurchaseLedger() {
+async function loadPurchaseLedger(filter = 'all') {
     try {
-        const response = await fetch('/api/ledger/purchases');
+        const response = await fetch(`/api/ledger/purchases?filter=${filter}`);
         const purchases = await response.json();
         const tableBody = document.getElementById('purchaseLedgerTableBody');
         if(!tableBody) return;

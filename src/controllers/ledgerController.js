@@ -2,15 +2,21 @@ const LedgerModel = require('../model/ledgerModel');
 
 const ledgerController = {
     getSales: (req, res) => {
-        LedgerModel.getSalesLedger((err, data) => {
-            if (err) return res.status(500).json({ error: "Failed to fetch sales ledger" });
-            res.json(data);
+        // Grab the filter from the URL, default to 'all' if none exists
+        const filter = req.query.filter || 'all'; 
+        
+        LedgerModel.getSalesLedger(filter, (err, result) => {
+            if (err) return res.status(500).json({ error: "Failed to load sales ledger" });
+            res.json(result);
         });
     },
+
     getPurchases: (req, res) => {
-        LedgerModel.getPurchaseLedger((err, data) => {
-            if (err) return res.status(500).json({ error: "Failed to fetch purchase ledger" });
-            res.json(data);
+        const filter = req.query.filter || 'all';
+        
+        LedgerModel.getPurchasesLedger(filter, (err, result) => {
+            if (err) return res.status(500).json({ error: "Failed to load purchase ledger" });
+            res.json(result);
         });
     }
 };

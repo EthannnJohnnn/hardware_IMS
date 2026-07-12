@@ -4,30 +4,69 @@
         // ==========================================
         // 1. EXISTING READ FUNCTIONS (With 'id' added)
         // ==========================================
-        getSalesLedger: (callback) => {
+        getSalesLedger: (filter, callback) => {
+            let timeCondition = "";
+            
+            // ✨ THE FIX: We use 's.sale_date' exactly as it is in your database!
+            if (filter === 'daily') timeCondition = "WHERE DATE(s.sale_date) = DATE('now', 'localtime')";
+            else if (filter === 'weekly') timeCondition = "WHERE DATE(s.sale_date) >= DATE('now', '-7 days', 'localtime')";
+            else if (filter === 'monthly') timeCondition = "WHERE DATE(s.sale_date) >= DATE('now', '-1 months', 'localtime')";
+
             const sql = `
-                SELECT s.id, s.sale_date AS date, s.item_code, p.item_name, p.srp AS unit_price, 
-                    s.quantity AS qty_sold, COALESCE(s.discount, 0) AS discount, 
-                    ((p.srp * s.quantity) - COALESCE(s.discount, 0)) AS total_sales
+                SELECT 
+                    s.id, 
+                    s.sale_date AS date,  /* 👈 Renames it so the frontend can read sale.date */
+                    s.item_code, 
+                    p.item_name, 
+                    p.srp AS unit_price, 
+                    s.quantity AS qty_sold, 
+                    s.discount, 
+                    ((p.srp * s.quantity) - s.discount) AS total_sales
                 FROM sales s
-                JOIN products p ON s.item_code = p.item_code
-                ORDER BY s.sale_date DESC
+                LEFT JOIN products p ON s.item_code = p.item_code
+                ${timeCondition}
+                ORDER BY s.id DESC
             `;
+            
             db.all(sql, [], (err, rows) => {
-                if (err) return callback(err, null);
+                if (err) {
+                    console.error("🛑 DB Error (Sales Ledger):", err.message);
+                    return callback(err, null);
+                }
                 callback(null, rows);
             });
         },
-        
-        getPurchaseLedger: (callback) => {
+
+       // --- FETCH PURCHASE LEDGER ---
+        getPurchasesLedger: (filter, callback) => {
+            let timeCondition = "";
+            
+            // ✨ THE FIX: We use 'pur.purchase_date' exactly as it is in your database!
+            if (filter === 'daily') timeCondition = "WHERE DATE(pur.purchase_date) = DATE('now', 'localtime')";
+            else if (filter === 'weekly') timeCondition = "WHERE DATE(pur.purchase_date) >= DATE('now', '-7 days', 'localtime')";
+            else if (filter === 'monthly') timeCondition = "WHERE DATE(pur.purchase_date) >= DATE('now', '-1 months', 'localtime')";
+
             const sql = `
-                SELECT pu.id, pu.purchase_date AS date, pu.item_code, p.item_name, pu.cost_price, pu.quantity AS qty_purchased, (pu.cost_price * pu.quantity) AS total_cost, pu.supplier
-                FROM purchases pu
-                JOIN products p ON pu.item_code = p.item_code
-                ORDER BY pu.purchase_date DESC
+                SELECT 
+                    pur.id, 
+                    pur.purchase_date AS date, /* 👈 Renames it so the frontend can read purchase.date */
+                    pur.item_code, 
+                    p.item_name, 
+                    p.cost_price AS cost_price, 
+                    pur.quantity AS qty_purchased, 
+                    pur.cost_price AS total_cost, 
+                    pur.supplier 
+                FROM purchases pur
+                LEFT JOIN products p ON pur.item_code = p.item_code
+                ${timeCondition}
+                ORDER BY pur.id DESC
             `;
+            
             db.all(sql, [], (err, rows) => {
-                if (err) return callback(err, null);
+                if (err) {
+                    console.error("🛑 DB Error (Purchase Ledger):", err.message);
+                    return callback(err, null);
+                }
                 callback(null, rows);
             });
         },
@@ -88,7 +127,8 @@
                     });
                 });
             });
-        }
+        },
+
     };
 
     module.exports = LedgerModel;

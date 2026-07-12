@@ -215,16 +215,20 @@
 
             <div id="view-inventory" class="d-none p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="fw-bold m-0 text-primary"><i class="bi bi-box-seam me-2"></i>Product Management</h4>
-                    <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                        <i class="bi bi-plus-lg me-1"></i>Add New Product
-                    </button>
-                    <button id="btnLowStock" class="btn btn-warning text-dark fw-bold shadow-sm">
-                        <i class="bi bi-exclamation-triangle"></i> Show Low Stock
-                    </button>
-                    <button id="btnAllStock" class="btn btn-secondary shadow-sm d-none">
-                        <i class="bi bi-arrow-counterclockwise"></i> Show All
-                    </button>
+                    <h4 class="fw-bold mb-0 text-primary">
+                        <i class="bi bi-box-seam me-2"></i> Product Management
+                    </h4>
+                    <!-- 2. ✨ THE FIX: We wrap the buttons in a d-flex container with a gap -->
+                    <div class="d-flex gap-3">
+                        <!-- Your Add Product Button -->
+                        <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                            <i class="bi bi-plus-lg me-1"></i> Add New Product
+                        </button>
+                        <!-- Your Low Stock Button -->
+                        <button class="btn btn-primary fw-bold shadow-sm" id="toggleLowStockBtn" onclick="toggleLowStock()">
+                            <i class="bi bi-exclamation-triangle me-1"></i> Show Low Stock
+                        </button>
+                    </div>
                 </div>
                 <div class="card shadow-sm border-0 border-top border-info border-4">
                     <div class="card-body p-0">
@@ -249,13 +253,23 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="fw-bold m-0 text-primary"><i class="bi bi-graph-up-arrow me-2"></i>Sales Ledger</h4>
                     
-                    <a href="http://localhost:3000/api/export/sales" target="_blank" id="exportSalesBtn" class="btn btn-sm btn-success fw-bold px-3 shadow-sm">
+                    <a href="http://localhost:3000/api/export/sales" target="_blank" id="exportSalesBtn" class="btn btn-sm btn-primary fw-bold px-3 shadow-sm">
                         <i class="bi bi-file-earmark-excel me-1"></i> Export to Excel
                     </a>
                 </div>
                 
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Sales History</h5>
+                    <select class="form-select w-auto shadow-sm fw-bold text-primary" id="salesTimeFilter" onchange="loadSalesLedger(this.value)">
+                        <option value="all">All Time</option>
+                        <option value="daily">Today (Daily)</option>
+                        <option value="weekly">Last 7 Days (Weekly)</option>
+                        <option value="monthly">Last 30 Days (Monthly)</option>
+                    </select>
+                </div>
+
                 <div class="card shadow-sm border-0 border-top border-success border-4">
-                    <div class="card-body p-0 table-responsive">
+                    <div class="card-body p-0 table-responsive"> 
                         <table class="table table-hover mb-0 text-center">
                             <thead>
                                 <tr>
@@ -279,11 +293,21 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="fw-bold m-0 text-primary"><i class="bi bi-box-arrow-in-down me-2"></i>Purchase Ledger</h4>
                     
-                    <a href="http://localhost:3000/api/export/purchases" target="_blank" class="btn btn-sm btn-success fw-bold px-3 shadow-sm">
+                    <a href="http://localhost:3000/api/export/purchases" target="_blank" class="btn btn-sm btn-primary fw-bold px-3 shadow-sm">
                         <i class="bi bi-file-earmark-excel me-1"></i> Export to Excel
                     </a>
                 </div>
                 
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Purchase History</h5>
+                    <select class="form-select w-auto shadow-sm fw-bold text-primary" id="purchaseTimeFilter" onchange="loadPurchaseLedger(this.value)">
+                        <option value="all">All Time</option>
+                        <option value="daily">Today (Daily)</option>
+                        <option value="weekly">Last 7 Days (Weekly)</option>
+                        <option value="monthly">Last 30 Days (Monthly)</option>
+                    </select>
+                </div>
+
                 <div class="card shadow-sm border-0 border-top border-primary border-4">
                     <div class="card-body p-0 table-responsive">
                         <table class="table table-hover mb-0 text-center">
