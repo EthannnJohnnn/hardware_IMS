@@ -3,21 +3,27 @@
 /* ==========================================================================
    1. SYSTEM DESIGN TOKENS & TYPOGRAPHY
    ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    /* Fluid Color Scale (Modern Slate & Indigo Archetype) */
+    /* Core Brand (Modern Slate & Indigo Archetype) */
     --primary: #4f46e5;
     --primary-hover: #4338ca;
     --primary-faded: rgba(79, 70, 229, 0.08);
     --primary-glow: rgba(79, 70, 229, 0.15);
-    
+
     --success: #10b981;
     --success-faded: rgba(16, 185, 129, 0.1);
     --warning: #f59e0b;
     --warning-faded: rgba(245, 158, 11, 0.1);
     --danger: #ef4444;
     --danger-faded: rgba(239, 68, 68, 0.1);
+    --info: #0ea5e9;
+    --info-faded: rgba(14, 165, 233, 0.1);
+    --purple: #8b5cf6;
+    --purple-faded: rgba(139, 92, 246, 0.1);
+    --brown: #92582e;
+    --brown-faded: rgba(146, 88, 46, 0.1);
 
     --slate-50: #f8fafc;
     --slate-100: #f1f5f9;
@@ -34,6 +40,18 @@
     --border-smooth: #e2e8f0;
     --text-main: #334155;
     --text-muted: #64748b;
+
+    /* ---- Chart Palette ----
+       One cohesive, muted family (all mid-saturation "400/500" tones) so
+       multi-series charts read as calm and related rather than a random
+       traffic-light mix. Use in this order for consistency across charts. */
+    --chart-1: #6366f1; /* indigo   — primary series */
+    --chart-2: #38bdf8; /* sky      */
+    --chart-3: #34d399; /* emerald  */
+    --chart-4: #fbbf24; /* amber    */
+    --chart-5: #a78bfa; /* violet   */
+    --chart-grid: rgba(100, 116, 139, 0.12);
+    --chart-axis-text: #94a3b8;
 
     /* Layout constants (used to offset the fixed sidebar/navbar) */
     --sidebar-width: 280px;
@@ -68,9 +86,6 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* The content column now sits to the right of the fixed sidebar.
-   Everything scrolls normally with the page — only the sidebar
-   and navbar are pinned. */
 #main-content {
     flex-grow: 1;
     margin-left: var(--sidebar-width);
@@ -99,12 +114,29 @@ select:focus-visible,
     outline-offset: 2px;
 }
 
+/* Section heading rhythm — every view (Inventory, Sales Ledger, Reports...)
+   opens the same way, so make that opening consistent app-wide. */
+#main-content > div[id^="view-"] > .d-flex.justify-content-between h4 {
+    letter-spacing: -0.03em;
+    font-weight: 700;
+}
+#main-content > div[id^="view-"] > .d-flex.justify-content-between h4 i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--primary-faded);
+    font-size: 1rem !important;
+    margin-right: 0.6rem !important;
+    vertical-align: middle;
+}
+
 /* ==========================================================================
    2. THE SIDEBAR (PINNED, MODERN GLASS RAIL)
    ========================================================================== */
 #sidebar {
-    /* Pinned to the viewport instead of relying on sticky (which breaks the
-       moment any ancestor gets overflow/height rules). Fixed is bullet-proof. */
     position: fixed;
     top: 0;
     left: 0;
@@ -121,8 +153,6 @@ select:focus-visible,
     padding: 1.5rem 1.25rem;
 }
 
-/* Slim custom scrollbar just for the rail, so a tall nav list doesn't
-   fight the premium scrollbar styling used elsewhere */
 #sidebar::-webkit-scrollbar {
     width: 5px;
 }
@@ -175,8 +205,6 @@ select:focus-visible,
     text-transform: uppercase;
 }
 
-/* Optional section labels above nav groups, e.g. "MAIN" / "REPORTS" —
-   safe to leave unused if the markup doesn't have them. */
 .sidebar-section-label {
     font-size: 0.68rem;
     font-weight: 700;
@@ -194,15 +222,14 @@ select:focus-visible,
     display: flex;
     align-items: center;
     gap: 0.7rem;
-    transition: transform var(--transition-interactive), 
-                background-color var(--transition-fast), 
-                color var(--transition-fast), 
+    transition: transform var(--transition-interactive),
+                background-color var(--transition-fast),
+                color var(--transition-fast),
                 box-shadow var(--transition-fast);
     padding: 12px 16px;
     margin-bottom: 2px;
 }
 
-/* Sidebar Micro-Interactions */
 .nav-pills .nav-link i {
     transition: transform var(--transition-interactive);
     font-size: 1.05rem;
@@ -221,8 +248,6 @@ select:focus-visible,
     transform: scale(1.15) rotate(3deg);
 }
 
-/* Active State: Vibrant Pop with Deep Glow + a left indicator bar so the
-   active item reads instantly even at a glance while scrolling the list */
 .nav-pills .nav-link.active {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%) !important;
     color: var(--bg-surface) !important;
@@ -247,8 +272,21 @@ select:focus-visible,
     transform: none;
 }
 
+/* Sidebar nav icons carry inline colors from the markup (text-info, text-success,
+   etc. or style="color:") — mute them to a calmer weight when NOT active, so the
+   only saturated color on the rail at rest is the active pill. Full color returns
+   on hover/active for a bit of life. */
+.nav-pills .nav-link:not(.active) i {
+    filter: saturate(0.65);
+    opacity: 0.85;
+}
+.nav-pills .nav-link:not(.active):hover i {
+    filter: saturate(1);
+    opacity: 1;
+}
+
 /* ==========================================================================
-   3. GLOBAL NAVBAR REDESIGN (PINNED, FLOATING GLASS BAR)
+   3. GLOBAL NAVBAR (PINNED, FLOATING GLASS BAR)
    ========================================================================== */
 .navbar {
     position: sticky;
@@ -265,16 +303,16 @@ select:focus-visible,
     transition: box-shadow var(--transition-normal), background-color var(--transition-normal);
 }
 
-/* Once real content scrolls up underneath, give the bar a touch more lift
-   so it visibly separates from the page. Toggle this class from JS with a
-   simple `window.scrollY > 8` listener for the full effect; the bar still
-   looks correct without it. */
 .navbar.is-scrolled {
     box-shadow: var(--shadow-lg) !important;
     border-color: rgba(203, 213, 225, 0.9);
 }
 
-/* Dynamic Input Focus Ring */
+#pageTitle {
+    letter-spacing: -0.03em;
+    font-weight: 700 !important;
+}
+
 .navbar input[type="search"] {
     transition: all var(--transition-normal);
     border: 1px solid transparent !important;
@@ -288,7 +326,6 @@ select:focus-visible,
     color: var(--slate-900);
 }
 
-/* ---- Navbar right-side user cluster ---- */
 .navbar-user {
     display: flex;
     align-items: center;
@@ -361,26 +398,25 @@ select:focus-visible,
 }
 
 /* ==========================================================================
-   4. DATA SURFACES & INTERACTIVE CARDS
+   4. DATA SURFACES: CARDS
    ========================================================================== */
 .card {
+    position: relative; /* anchors the gradient accent bar in section 4b */
     border-radius: 20px !important;
     background: var(--bg-surface);
     border: 1px solid rgba(241, 245, 249, 0.8) !important;
     box-shadow: var(--shadow-md) !important;
-    transition: transform var(--transition-interactive), 
-                box-shadow var(--transition-interactive), 
+    transition: transform var(--transition-interactive),
+                box-shadow var(--transition-interactive),
                 border-color var(--transition-normal);
 }
 
-/* Kinetic Floating Layering on Hover */
 .card:hover {
     transform: translateY(-6px);
     box-shadow: var(--shadow-xl) !important;
     border-color: var(--slate-200) !important;
 }
 
-/* Metric Display Overhaul */
 .card-body h6 {
     font-size: 0.8rem;
     text-transform: uppercase;
@@ -393,6 +429,66 @@ select:focus-visible,
     font-weight: 700;
 }
 
+/* ---- 4b. Unified accent bar ----
+   The app used flat `border-top border-{color} border-3/4` utility classes
+   in a dozen places (dashboard lists, ledgers, reports, expenses, AR,
+   admin notes). That reads as a dozen small decisions. Replacing all of
+   them with the same soft gradient bar makes it read as one decision,
+   repeated — the single signature device tying every screen together. */
+.card.border-top {
+    border-top-width: 0 !important;
+}
+.card.border-top::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 24px;
+    right: 24px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: linear-gradient(90deg, var(--_accent) 0%, var(--_accent-soft, var(--_accent)) 50%, var(--_accent) 100%);
+}
+.card.border-top.border-success   { --_accent: var(--success);  --_accent-soft: #6ee7b7; }
+.card.border-top.border-danger    { --_accent: var(--danger);   --_accent-soft: #fca5a5; }
+.card.border-top.border-primary   { --_accent: var(--primary);  --_accent-soft: #a5b4fc; }
+.card.border-top.border-warning   { --_accent: var(--warning);  --_accent-soft: #fcd34d; }
+.card.border-top.border-info      { --_accent: var(--info);     --_accent-soft: #7dd3fc; }
+
+/* ---- 4c. Icon chips ----
+   A single reusable badge treatment for icons: colored rounded square,
+   faded background tint. Used on card headers throughout instead of a
+   bare Bootstrap glyph, echoing the sidebar brand mark. Apply by wrapping
+   an <i> in <span class="icon-chip icon-chip-{color}">. */
+.icon-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+.icon-chip-primary { background: var(--primary-faded); color: var(--primary); }
+.icon-chip-success { background: var(--success-faded); color: var(--success); }
+.icon-chip-warning { background: var(--warning-faded); color: var(--warning); }
+.icon-chip-danger  { background: var(--danger-faded);  color: var(--danger); }
+.icon-chip-info    { background: var(--info-faded);    color: var(--info); }
+.icon-chip-purple  { background: var(--purple-faded);  color: var(--purple); }
+.icon-chip-brown   { background: var(--brown-faded);   color: var(--brown); }
+
+/* ---- 4d. Dashboard stat cards ----
+   Give the three top KPI cards (Total Sales / Net Profit / Total Products)
+   a shared layout: label + value on the left, icon chip on the right,
+   plus a small trend/context line for visual weight parity with the
+   chart cards beside them. */
+#view-dashboard .row.mb-4 .card .card-body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
 /* ==========================================================================
    5. BUTTON ARCHITECTURE (MICRO-TRANSITIONS)
    ========================================================================== */
@@ -402,8 +498,8 @@ select:focus-visible,
     padding: 10px 20px;
     font-size: 0.875rem;
     letter-spacing: -0.01em;
-    transition: transform var(--transition-interactive), 
-                box-shadow var(--transition-fast), 
+    transition: transform var(--transition-interactive),
+                box-shadow var(--transition-fast),
                 background-color var(--transition-fast);
 }
 
@@ -411,7 +507,6 @@ select:focus-visible,
     transform: scale(0.96) translateY(0) !important;
 }
 
-/* Button Archetypes */
 .btn-primary {
     background-color: var(--primary);
     border-color: var(--primary);
@@ -434,6 +529,20 @@ select:focus-visible,
     color: var(--bg-surface);
     transform: translateY(-2px);
     box-shadow: 0 6px 16px var(--primary-glow);
+}
+
+.btn-warning:hover, .btn-danger:hover, .btn-success:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.03);
+}
+
+.btn-light {
+    background-color: var(--slate-50);
+    border-color: var(--border-smooth);
+    color: var(--text-main);
+}
+.btn-light:hover {
+    background-color: var(--slate-100);
 }
 
 /* ==========================================================================
@@ -466,13 +575,25 @@ select:focus-visible,
     font-size: 0.925rem;
 }
 
-/* Row Hover Smooth Fluid Background Fade */
 .table-hover tbody tr {
     transition: background-color var(--transition-fast);
 }
 
 .table-hover tbody tr:hover {
     background-color: rgba(241, 245, 249, 0.6) !important;
+}
+
+/* Cards that wrap a table shouldn't float on hover the same way stat/chart
+   cards do — a whole ledger lifting on hover feels noisy. Keep the accent
+   bar and shadow, drop the lift. */
+.card:has(> .card-body > .table-responsive),
+.card:has(> .card-body > table) {
+    transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
+}
+.card:has(> .card-body > .table-responsive):hover,
+.card:has(> .card-body > table):hover {
+    transform: none;
+    box-shadow: var(--shadow-md) !important;
 }
 
 /* ==========================================================================
@@ -486,7 +607,6 @@ select:focus-visible,
     letter-spacing: 0.02em;
 }
 
-/* Semantic Badges Color Grading */
 .bg-success {
     background-color: var(--success-faded) !important;
     color: var(--success) !important;
@@ -515,9 +635,8 @@ select:focus-visible,
     transition: all var(--transition-normal);
 }
 
-/* Give the dropdown arrow its breathing room */
 .form-select {
-    padding-right: 2.5rem !important; 
+    padding-right: 2.5rem !important;
 }
 
 .form-control:focus, .form-select:focus {
@@ -527,7 +646,7 @@ select:focus-visible,
 }
 
 /* ==========================================================================
-   9. MODAL INTERFACE GLOW-UP
+   9. MODAL INTERFACE
    ========================================================================== */
 .modal-content {
     border-radius: 24px !important;
@@ -578,75 +697,84 @@ select:focus-visible,
     background: var(--slate-400);
 }
 
-/* Firefox doesn't support ::-webkit-scrollbar */
 * {
     scrollbar-width: thin;
     scrollbar-color: var(--slate-300) var(--bg-app);
 }
 
 /* ==========================================================================
-   11. ADMIN WORKSPACE — "LEGAL PAD" NOTES
+   11. CHART CARDS
    ========================================================================== 
-   Signature idea: the card reads as an actual taped-down notepad sitting
-   on top of the dashboard, complete with a washi-tape corner, a faint
-   margin rule, and a soft grid — instead of just another white bootstrap
-   card. Everything else on this card stays quiet so that detail can carry it.
+   Chart.js draws its own canvas, so its colors are themed separately (see
+   chart-theme.js), but the *frame* around every chart — header rhythm,
+   legend chips if you build a custom one, empty/loading state — lives here
+   so the three dashboard charts read as one family regardless of type. */
+
+#view-dashboard canvas {
+    /* Chart.js respects a CSS max-width/height on the canvas's parent, but
+       giving the element itself a subtle radius keeps tooltips/edges from
+       ever looking like they're floating over a hard rectangle. */
+    border-radius: 8px;
+}
+
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    margin-top: 0.75rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.chart-legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+/* Top / Worst seller lists — restyle from default Bootstrap list-group
+   into a quieter rank list matching the rest of the surface. */
+#topSellersList .list-group-item,
+#worstSellersList .list-group-item {
+    border: none;
+    border-bottom: 1px solid var(--slate-100);
+    padding: 0.75rem 0.25rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-main);
+    background: transparent;
+}
+#topSellersList .list-group-item:last-child,
+#worstSellersList .list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* ==========================================================================
+   12. ADMIN WORKSPACE — UNIFIED NOTES CARD
+   ==========================================================================
+   Previously a "legal pad" concept (washi tape, red margin rule, cream
+   paper) that broke from the indigo/slate system everywhere else. Redone
+   as a plain, calm workspace card that uses the exact same header,
+   icon-chip, and toolbar language as the rest of the app.
 */
-
-.card:has(#globalStickyNote) {
-    position: relative;
-    overflow: visible;
-    border-top: none !important; /* replaces the flat utility border with the gradient bar below */
-}
-
-/* Slim gradient bar standing in for the old solid border-top-warning */
-.card:has(#globalStickyNote)::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 24px;
-    right: 24px;
-    height: 3px;
-    border-radius: 0 0 3px 3px;
-    background: linear-gradient(90deg, var(--warning) 0%, #fcd34d 50%, var(--warning) 100%);
-}
-
-/* A strip of washi tape "holding" the pad in place */
-.card:has(#globalStickyNote)::after {
-    content: '';
-    position: absolute;
-    top: -11px;
-    left: 40px;
-    width: 68px;
-    height: 22px;
-    background: repeating-linear-gradient(
-        45deg,
-        rgba(245, 158, 11, 0.55),
-        rgba(245, 158, 11, 0.55) 5px,
-        rgba(252, 211, 77, 0.4) 5px,
-        rgba(252, 211, 77, 0.4) 10px
-    );
-    box-shadow: var(--shadow-sm);
-    border-radius: 2px;
-    transform: rotate(-4deg);
-    pointer-events: none;
-}
 
 .card:has(#globalStickyNote) .card-header {
     background-color: var(--bg-surface);
 }
 
-/* Give the header icon its own little badge instead of a bare glyph */
 .card:has(#globalStickyNote) .card-header h5 i.bi-journal-check {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
     background: var(--warning-faded);
-    font-size: 0.95rem !important;
-    margin-right: 0.6rem !important;
+    color: var(--warning);
+    font-size: 1rem !important;
+    margin-right: 0.65rem !important;
 }
 
 /* Formatting toolbar — recessed pill instead of loose bordered buttons */
@@ -679,8 +807,6 @@ select:focus-visible,
     transform: scale(0.94) !important;
 }
 
-/* Toggle state for format buttons — add/remove this class from JS when a
-   selection has that formatting applied (e.g. document.queryCommandState) */
 .card:has(#globalStickyNote) .btn-group .btn.is-active {
     background: var(--primary-faded);
     color: var(--primary);
@@ -690,7 +816,8 @@ select:focus-visible,
     border-radius: 9px;
 }
 
-/* A subtle warm glow around the whole pad while it's being edited */
+/* A quiet indigo glow while editing, consistent with input focus rings
+   elsewhere in the app, replacing the old warm paper glow. */
 .card:has(#globalStickyNote:focus) {
     box-shadow: var(--shadow-xl) !important;
 }
@@ -698,32 +825,30 @@ select:focus-visible,
     height: 4px;
 }
 
-/* The writing surface itself */
+/* The writing surface — plain surface with a faint dot grid instead of
+   ruled "paper", tinted with the app's own slate/indigo palette rather
+   than cream/red so it reads as part of the same system. */
 #globalStickyNote {
     position: relative;
     color: var(--slate-700);
-    background-color: #fffdf8;
-    background-image:
-        radial-gradient(circle, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, transparent 47px, rgba(239, 68, 68, 0.22) 47px, rgba(239, 68, 68, 0.22) 48px, transparent 48px);
-    background-size: 20px 20px, 100% 100%;
-    padding: 28px 32px 28px 68px !important;
+    background-color: var(--bg-surface);
+    background-image: radial-gradient(circle, rgba(100, 116, 139, 0.12) 1px, transparent 1px);
+    background-size: 20px 20px;
+    padding: 28px 32px !important;
     transition: background-color var(--transition-fast);
 }
 
 #globalStickyNote:focus {
-    background-color: #fffef9;
+    background-color: var(--bg-surface);
 }
 
-/* Make checkboxes slightly larger and aligned */
 #globalStickyNote input[type="checkbox"] {
     transform: scale(1.3);
     margin-right: 10px;
     cursor: pointer;
-    accent-color: var(--warning);
+    accent-color: var(--primary);
 }
 
-/* Bullet list spacing */
 #globalStickyNote ul {
     margin-bottom: 0;
     padding-left: 1.5rem;
@@ -737,7 +862,6 @@ select:focus-visible,
     color: var(--slate-900);
 }
 
-/* Simulated Placeholder for contenteditable */
 #globalStickyNote:empty:before {
     content: "Draft your hardware lists, reminders, and daily tasks here... Use the toolbar above to format.";
     color: var(--slate-400);
