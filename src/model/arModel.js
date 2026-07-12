@@ -134,6 +134,21 @@ const ARModel = {
             }
             callback(null, { updatedRows: this.changes });
         });
+    },
+
+    // --- Delete AR Record and Restore Stock ---
+    deleteAR: (data, callback) => {
+        // Step A: Delete the record from Accounts Receivable
+        db.run(`DELETE FROM ar WHERE id = ?`, [data.id], function(err) {
+            if (err) return callback(err, null);
+
+            // Step B: Put the items BACK into inventory (current_stock + qty)
+            const restoreStockQuery = `UPDATE products SET current_stock = current_stock + ? WHERE item_code = ?`;
+            db.run(restoreStockQuery, [data.qty, data.item_code], function(err) {
+                if (err) return callback(err, null);
+                return callback(null, { message: "AR record deleted and stock restored!" });
+            });
+        });
     }
 };
 

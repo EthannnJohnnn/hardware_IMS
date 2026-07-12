@@ -8,7 +8,7 @@ router.get('/', arController.getAllAR);
 router.post('/', arController.addDebt);
 router.put('/:id/pay', arController.markAsPaid);
 
-// ✨ NEW: Phase 20 Protected Edit Route
 router.put('/edit', verifyAdminPin, arController.editDebt);
+router.delete('/delete', arController.deleteAR);
 
 module.exports = router;

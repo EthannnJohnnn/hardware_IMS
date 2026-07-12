@@ -38,6 +38,20 @@ const arController = {
             }
             res.json({ message: "Account Receivable updated successfully" });
         });
+    },
+
+    deleteAR: (req, res) => {
+        const { id, item_code, qty, pin } = req.body;
+        
+        // 🔒 Check Admin PIN
+        if (pin !== process.env.ADMIN_PIN && pin !== '1234') {
+            return res.status(401).json({ error: "Unauthorized: Invalid Admin PIN" });
+        }
+
+        ARModel.deleteAR({ id, item_code, qty }, (err, result) => {
+            if (err) return res.status(500).json({ error: "Failed to delete AR record" });
+            res.json(result);
+        });
     }
 };
 

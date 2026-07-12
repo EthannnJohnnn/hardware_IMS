@@ -7,7 +7,7 @@ const { verifyAdminPin } = require('../middleware/authMiddleware'); // ✨ NEW G
 router.get('/', expenseController.getExpenses);
 router.post('/', expenseController.addExpense);
 
-// ✨ NEW: Phase 20 Protected Edit Route
 router.put('/edit', verifyAdminPin, expenseController.editExpense);
+router.delete('/delete', expenseController.deleteExpense);
 
 module.exports = router;

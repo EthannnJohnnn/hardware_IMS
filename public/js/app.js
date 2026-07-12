@@ -623,10 +623,17 @@ async function loadExpenses() {
                     <td class="text-danger fw-bold d-flex justify-content-between align-items-center">
                         -${currencyFormatter.format(exp.amount)}
                         
-                        <button class="btn btn-sm btn-outline-primary shadow-sm px-3" 
-                                onclick="openEditExpenseModal(${exp.id}, '${exp.description}', ${exp.amount})">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
+                        <div class="btn-group btn-group-sm shadow-sm" role="group">
+                            <button class="btn btn-outline-primary px-3" 
+                                    onclick="openEditExpenseModal(${exp.id}, '${exp.description}', ${exp.amount})">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+
+                            <button class="btn btn-outline-danger px-3" 
+                                    onclick="openDeleteLedgerModal('expense', ${exp.id}, 'N/A', 0)" title="Delete Expense">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -704,12 +711,22 @@ async function loadAR() {
                                 <button class="btn btn-sm btn-outline-primary shadow-sm px-3" onclick="openEditArModal(${ar.id}, '${ar.customer_name}', '${ar.item_name}', ${ar.quantity}, ${ar.base_debt})" title="Edit Record">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
+
+                                <!-- ✨ NEW: Trash Button for Unpaid Records -->
+                                <button class="btn btn-sm btn-outline-danger shadow-sm px-3" onclick="openDeleteLedgerModal('ar', ${ar.id}, '${ar.item_code}', ${ar.quantity})" title="Delete Record">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>` 
                             : `<div class="d-flex align-items-center flex-nowrap gap-2">
                                 <i class="bi bi-check-all text-success fs-5 px-1"></i>
                                 
                                 <button class="btn btn-sm btn-outline-primary shadow-sm px-3" onclick="openEditArModal(${ar.id}, '${ar.customer_name}', '${ar.item_name}', ${ar.quantity}, ${ar.base_debt})" title="Edit Record">
                                     <i class="bi bi-pencil-square"></i>
+                                </button>
+
+                                <!-- ✨ NEW: Trash Button for Paid Records -->
+                                <button class="btn btn-sm btn-outline-danger shadow-sm px-3" onclick="openDeleteLedgerModal('ar', ${ar.id}, '${ar.item_code}', ${ar.quantity})" title="Delete Record">
+                                    <i class="bi bi-trash"></i>
                                 </button>
                             </div>`}
                     </td>
@@ -1557,14 +1574,18 @@ async function submitLedgerDelete() {
     const payload = {
         id: document.getElementById('delete-ledger-id').value,
         item_code: document.getElementById('delete-ledger-item').value,
-        qty: parseInt(document.getElementById('delete-ledger-qty').value),
+        qty: parseInt(document.getElementById('delete-ledger-qty').value) || 0,
         pin: document.getElementById('delete-ledger-pin').value
     };
 
     if (!payload.pin) return alert("⚠️ Admin PIN Required.");
 
-    // Route it to the correct API endpoint
-    const endpoint = type === 'sale' ? '/api/transactions/sale' : '/api/transactions/purchase';
+    // ✨ UPDATE 1: Route it to the correct API endpoint, now including Expenses!
+    let endpoint = '';
+    if (type === 'sale') endpoint = '/api/transactions/sale';
+    else if (type === 'purchase') endpoint = '/api/transactions/purchase';
+    else if (type === 'ar') endpoint = '/api/ar/delete';
+    else if (type === 'expense') endpoint = '/api/expenses/delete'; // Ensure this matches your route setup!
 
     try {
         const response = await fetch(endpoint, {
@@ -1578,11 +1599,12 @@ async function submitLedgerDelete() {
         if (response.ok) {
             bootstrap.Modal.getInstance(document.getElementById('deleteLedgerModal')).hide();
             
-            // Refresh the specific ledger that was changed
+            // ✨ UPDATE 2: Refresh the specific ledger that was changed
             if (type === 'sale' && typeof loadSales === 'function') loadSales();
             if (type === 'purchase' && typeof loadPurchases === 'function') loadPurchases();
+            if (type === 'ar' && typeof loadAccountsReceivable === 'function') loadAccountsReceivable();
+            if (type === 'expense' && typeof loadOperatingExpenses === 'function') loadOperatingExpenses(); 
             
-            // Refresh global data to show the reversed stock and new totals
             if(typeof loadProducts === 'function') loadProducts(); 
             if(typeof loadDashboardSummary === 'function') loadDashboardSummary();
         } else {

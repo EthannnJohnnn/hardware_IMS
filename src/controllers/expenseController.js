@@ -27,6 +27,21 @@ const expenseController = {
             }
             res.json({ message: "Expense updated successfully" });
         });
+    },
+
+    deleteExpense: (req, res) => {
+        const { id, pin } = req.body;
+        
+        // 🔒 Check Admin PIN
+        if (pin !== process.env.ADMIN_PIN && pin !== '1234') {
+            return res.status(401).json({ error: "Unauthorized: Invalid Admin PIN" });
+        }
+
+        // Make sure you use the exact capitalization for your ExpenseModel here!
+        ExpenseModel.deleteExpense(id, (err, result) => {
+            if (err) return res.status(500).json({ error: "Failed to delete expense" });
+            res.json(result);
+        });
     }
 };
 

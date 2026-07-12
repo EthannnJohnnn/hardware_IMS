@@ -41,6 +41,15 @@ const ExpenseModel = {
             }
             callback(null, { updatedRows: this.changes });
         });
+    },
+
+    // --- Delete Operating Expense ---
+    deleteExpense: (id, callback) => {
+        // We only need the ID, no need to touch the products table!
+        db.run(`DELETE FROM expenses WHERE id = ?`, [id], function(err) {
+            if (err) return callback(err, null);
+            return callback(null, { message: "Operating expense deleted successfully!" });
+        });
     }
 };
 
