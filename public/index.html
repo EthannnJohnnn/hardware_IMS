@@ -464,7 +464,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label text-muted small fw-bold">QUANTITY RETURNED</label>
-                                <input type="number" class="form-control bg-light border-0" id="returnQtyInput" min="1" value="1">
+                                <input type="number" class="form-control bg-light border-0" id="returnQtyInput" min="0.01" value="1" step="any">
                             </div>
 
                             <div class="text-end mt-4">
@@ -483,7 +483,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label text-muted small fw-bold">QUANTITY TAKEN</label>
-                                <input type="number" class="form-control bg-light border-0" id="takenQtyInput" min="1" value="1">
+                                <input type="number" class="form-control bg-light border-0" id="takenQtyInput" min="0.01" value="1" step="any">
                             </div>
 
                             <div class="text-end mt-4">
@@ -529,7 +529,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label text-muted small fw-bold">QUANTITY TO OPEN</label>
-                                <input type="number" class="form-control bg-light border-0" id="repackSourceQty" min="1" value="1">
+                                <input type="number" class="form-control bg-light border-0" id="repackSourceQty" min="0.01" value="1" step="any">
                             </div>
                         </div>
 
@@ -543,7 +543,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label text-muted small fw-bold">QUANTITY YIELDED</label>
-                                <input type="number" class="form-control bg-light border-0" id="repackResultQty" min="1" value="1">
+                                <input type="number" class="form-control bg-light border-0" id="repackResultQty" min="0.01" value="1" step="any">
                             </div>
                         </div>
                     </div>
@@ -623,7 +623,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Quantity</label>
-                        <input type="number" class="form-control bg-light" id="transactionQuantity" min="1" value="1">
+                        <input type="number" class="form-control bg-light" id="transactionQuantity" min="0.01" value="1" step="any">
                     </div>
 
                     <div id="discountField" class="mb-3">
@@ -708,7 +708,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">QUANTITY TAKEN</label>
-                        <input type="number" class="form-control bg-light" id="arQtyInput" min="1" required>
+                        <input type="number" class="form-control bg-light" id="arQtyInput" min="0.01" required step="any">
                     </div>
                     <div id="arAlert" class="alert alert-danger d-none mt-2"></div>
                 </div>
@@ -750,7 +750,7 @@
                     
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Corrected Quantity</label>
-                        <input type="number" class="form-control bg-light" id="editQtyInput" min="1">
+                        <input type="number" class="form-control bg-light" id="editQtyInput" min="0.01" step="any">
                     </div>
                     <div id="editPurchaseFields" class="d-none">
                         <div class="mb-3">
@@ -868,7 +868,7 @@
                     <div class="row">
                     <div class="col mb-3">
                         <label class="form-label text-muted small">Quantity</label>
-                        <input type="number" class="form-control" id="edit-ar-qty">
+                        <input type="number" class="form-control" id="edit-ar-qty" step="any">
                     </div>
                     <div class="col mb-3">
                         <label class="form-label text-muted small">Base Debt (₱)</label>

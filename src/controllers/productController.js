@@ -14,13 +14,19 @@ const productController = {
         });
     },
     
-    // ✨ THE NEW TRANSFER LOGIC IS HERE ✨
     adjustStock: (req, res) => {
         const { item_code, action, qty } = req.body;
-        if (!item_code || !action || !qty || qty <= 0) {
+        
+        // 1. Convert the incoming quantity to a decimal number
+        const decimalQty = parseFloat(qty);
+
+        // 2. Check if it is valid
+        if (!item_code || !action || isNaN(decimalQty) || decimalQty <= 0) {
             return res.status(400).json({ error: "Invalid adjustment parameters." });
         }
-        ProductModel.adjustStock(item_code, action, qty, (err, result) => {
+
+        // 3. Pass the safe decimal number to the model
+        ProductModel.adjustStock(item_code, action, decimalQty, (err, result) => {
             if (err) return res.status(500).json({ error: "Failed to adjust stock." });
             res.json(result);
         });

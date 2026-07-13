@@ -1,21 +1,36 @@
-// src/model/reportModel.js
 const db = require('../config/database');
 
 const ReportModel = {
-    // 1. Weekly & Monthly Summary 
+    // 1. Weekly & Monthly Summary (Fixed Net Profit & COGS)
     getSummaryByDate: (startDate, endDate, callback) => {
-        const summary = { total_sales: 0, total_purchases: 0, total_expenses: 0, net_amount: 0 };
-        const salesQuery = `SELECT SUM(s.quantity * p.srp) as total FROM sales s JOIN products p ON s.item_code = p.item_code WHERE DATE(s.sale_date) BETWEEN ? AND ?`;
-        const purchQuery = `SELECT SUM(quantity * cost_price) as total FROM purchases WHERE DATE(purchase_date) BETWEEN ? AND ?`;
+        const summary = { 
+            total_sales: 0, 
+            total_cogs: 0, 
+            total_expenses: 0, 
+            net_amount: 0, 
+            current_inventory_value: 0 
+        };
+        
+        // Calculate Revenue and COGS only for items actually sold
+        const salesQuery = `SELECT SUM(s.quantity * p.srp) as revenue, SUM(s.quantity * p.cost_price) as cogs FROM sales s JOIN products p ON s.item_code = p.item_code WHERE DATE(s.sale_date) BETWEEN ? AND ?`;
         const expQuery = `SELECT SUM(amount) as total FROM expenses WHERE DATE(expense_date) BETWEEN ? AND ?`;
+        
+        // ✨ PHASE 31: Total Inventory Value Query
+        const invQuery = `SELECT SUM(current_stock * cost_price) as total FROM products`;
 
         db.get(salesQuery, [startDate, endDate], (err, salesRow) => {
-            if (!err && salesRow && salesRow.total) summary.total_sales = salesRow.total;
-            db.get(purchQuery, [startDate, endDate], (err, purchRow) => {
-                if (!err && purchRow && purchRow.total) summary.total_purchases = purchRow.total;
-                db.get(expQuery, [startDate, endDate], (err, expRow) => {
-                    if (!err && expRow && expRow.total) summary.total_expenses = expRow.total;
-                    summary.net_amount = summary.total_sales - summary.total_purchases - summary.total_expenses;
+            if (!err && salesRow) {
+                summary.total_sales = salesRow.revenue || 0;
+                summary.total_cogs = salesRow.cogs || 0;
+            }
+            db.get(expQuery, [startDate, endDate], (err, expRow) => {
+                if (!err && expRow && expRow.total) summary.total_expenses = expRow.total;
+                
+                db.get(invQuery, [], (err, invRow) => {
+                    if (!err && invRow && invRow.total) summary.current_inventory_value = invRow.total;
+
+                    // REAL NET PROFIT = Revenue - Cost of Goods Sold - Expenses
+                    summary.net_amount = summary.total_sales - summary.total_cogs - summary.total_expenses;
                     return callback(null, summary);
                 });
             });
@@ -34,14 +49,12 @@ const ReportModel = {
         });
     },
 
-    // ✨ NEW STEP 2: Purchase Aggregation (Daily or Monthly)
+    // 3. Purchase Aggregation
     getAggregatedPurchases: (type, callback) => {
         let sql = '';
         if (type === 'monthly') {
-            // Groups by Year-Month (e.g., 2026-06)
             sql = `SELECT strftime('%Y-%m', purchase_date) as date, SUM(quantity * cost_price) as total_cost FROM purchases GROUP BY strftime('%Y-%m', purchase_date) ORDER BY strftime('%Y-%m', purchase_date) DESC`;
         } else {
-            // Groups by exact Day (e.g., 2026-06-01)
             sql = `SELECT DATE(purchase_date) as date, SUM(quantity * cost_price) as total_cost FROM purchases GROUP BY DATE(purchase_date) ORDER BY DATE(purchase_date) DESC`;
         }
 
@@ -54,38 +67,7 @@ const ReportModel = {
         });
     },
 
-// 1. Weekly & Monthly Summary (Now includes Current Inventory Value)
-    getSummaryByDate: (startDate, endDate, callback) => {
-        const summary = { total_sales: 0, total_purchases: 0, total_expenses: 0, net_amount: 0, current_inventory_value: 0 };
-        
-        const salesQuery = `SELECT SUM(s.quantity * p.srp) as total FROM sales s JOIN products p ON s.item_code = p.item_code WHERE DATE(s.sale_date) BETWEEN ? AND ?`;
-        const purchQuery = `SELECT SUM(quantity * cost_price) as total FROM purchases WHERE DATE(purchase_date) BETWEEN ? AND ?`;
-        const expQuery = `SELECT SUM(amount) as total FROM expenses WHERE DATE(expense_date) BETWEEN ? AND ?`;
-        
-        // THE FIX: Calculate the total cash currently locked in physical stock
-        const invQuery = `SELECT SUM(current_stock * cost_price) as total FROM products`;
-
-        // Run queries sequentially passing the start and end dates
-        db.get(salesQuery, [startDate, endDate], (err, salesRow) => {
-            if (!err && salesRow && salesRow.total) summary.total_sales = salesRow.total;
-            db.get(purchQuery, [startDate, endDate], (err, purchRow) => {
-                if (!err && purchRow && purchRow.total) summary.total_purchases = purchRow.total;
-                db.get(expQuery, [startDate, endDate], (err, expRow) => {
-                    if (!err && expRow && expRow.total) summary.total_expenses = expRow.total;
-                    
-                    // Run the inventory query (no dates needed for current stock)
-                    db.get(invQuery, [], (err, invRow) => {
-                        if (!err && invRow && invRow.total) summary.current_inventory_value = invRow.total;
-
-                        // Calculate Net Amount
-                        summary.net_amount = summary.total_sales - summary.total_purchases - summary.total_expenses;
-                        return callback(null, summary);
-                    });
-                });
-            });
-        });
-    },
-
+    // 4. Top Sellers
     getTopSellers: (callback) => {
         const sql = `
             SELECT p.item_name, SUM(s.quantity) AS total_sold
@@ -99,6 +81,7 @@ const ReportModel = {
         db.all(sql, [], (err, rows) => callback(err, rows));
     },
 
+    // 5. Worst Sellers
     getWorstSellers: (callback) => {
         const sql = `
             SELECT p.item_name, COALESCE(SUM(s.quantity), 0) AS total_sold
@@ -111,7 +94,6 @@ const ReportModel = {
         `;
         db.all(sql, [], (err, rows) => callback(err, rows));
     }
-    
 };
 
 module.exports = ReportModel;

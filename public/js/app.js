@@ -121,7 +121,7 @@ function openTransactionModal(itemCode, itemName, currentStock) {
 // ==========================================
 function calculateLiveTotal() {
     const type = document.getElementById('transactionType').value;
-    const qty = parseInt(document.getElementById('transactionQuantity').value) || 0;
+    const qty = parseFloat(document.getElementById('transactionQuantity').value) || 0;
     const discount = parseFloat(document.getElementById('transactionDiscount').value) || 0;
 
     // We only calculate live totals for sales
@@ -166,7 +166,7 @@ document.getElementById('transactionType').addEventListener('change', function()
 document.getElementById('saveTransactionBtn').addEventListener('click', async () => {
     const itemCode = document.getElementById('transactionItemCode').value;
     const type = document.getElementById('transactionType').value;
-    const quantity = parseInt(document.getElementById('transactionQuantity').value);
+    const quantity = parseFloat(document.getElementById('transactionQuantity').value);
 
     if (isNaN(quantity) || quantity <= 0) {
         return alert("Please enter a valid number greater than 0.");
@@ -174,7 +174,7 @@ document.getElementById('saveTransactionBtn').addEventListener('click', async ()
     
     // Prevent deducting more stock than you have for Sales AND Transfers Out
     if (type === 'sale' || type === 'transfer_out') {
-        const stockLimit = parseInt(document.getElementById('transactionQuantity').dataset.stockLimit);
+        const stockLimit = parseFloat(document.getElementById('transactionQuantity').dataset.stockLimit);
         if (quantity > stockLimit) {
             return alert(`🛑 Error: You only have ${stockLimit} in stock!`);
         }
@@ -328,12 +328,10 @@ async function loadDashboardSummary() {
         const purchResponse = await fetch('/api/ledger/purchases');
         const purchases = await purchResponse.json();
 
-        let totalCogsMath = 0;
-        purchases.forEach(p => totalCogsMath += p.total_cost);
-
         const cogsText = document.getElementById('totalCogsText');
         if (cogsText) {
-            cogsText.innerText = currencyFormatter.format(totalCogsMath);
+            // We now use the real COGS provided directly from the backend!
+            cogsText.innerText = currencyFormatter.format(data.total_cogs || 0);
         }
 
         const chartInstance = Chart.getChart("purchaseChart");
@@ -780,7 +778,7 @@ if (arModalEl) {
 document.getElementById('saveArBtn').addEventListener('click', async () => {
     const customer_name = document.getElementById('arNameInput').value;
     const item_code = document.getElementById('arProductInput').value;
-    const qty = parseInt(document.getElementById('arQtyInput').value);
+    const qty = parseFloat(document.getElementById('arQtyInput').value);
     const alertBox = document.getElementById('arAlert');
     
     alertBox.classList.add('d-none');
@@ -1151,8 +1149,8 @@ if (navExchangeBtn) {
 function calculateExchangeMath() {
     const returnCode = document.getElementById('returnItemInput').value;
     const takenCode = document.getElementById('takenItemInput').value;
-    const returnQty = parseInt(document.getElementById('returnQtyInput').value) || 0;
-    const takenQty = parseInt(document.getElementById('takenQtyInput').value) || 0;
+    const returnQty = parseFloat(document.getElementById('returnQtyInput').value) || 0;
+    const takenQty = parseFloat(document.getElementById('takenQtyInput').value) || 0;
 
     const returnItem = allProductsData.find(p => p.item_code === returnCode);
     const takenItem = allProductsData.find(p => p.item_code === takenCode);
@@ -1207,9 +1205,9 @@ function calculateExchangeMath() {
 document.getElementById('processExchangeBtn').addEventListener('click', async () => {
     const payload = {
         returned_item_code: document.getElementById('returnItemInput').value,
-        returned_qty: parseInt(document.getElementById('returnQtyInput').value),
+        returned_qty: parseFloat(document.getElementById('returnQtyInput').value),
         taken_item_code: document.getElementById('takenItemInput').value,
-        taken_qty: parseInt(document.getElementById('takenQtyInput').value),
+        taken_qty: parseFloat(document.getElementById('takenQtyInput').value),
         cash_top_up: parseFloat(document.getElementById('processExchangeBtn').dataset.topUp)
     };
 
@@ -1289,7 +1287,7 @@ document.getElementById('verifyPinBtn').addEventListener('click', async () => {
 document.getElementById('saveLedgerEditBtn').addEventListener('click', async () => {
     const id = document.getElementById('editTargetId').value;
     const type = document.getElementById('editTargetType').value;
-    const qty = parseInt(document.getElementById('editQtyInput').value);
+    const qty = parseFloat(document.getElementById('editQtyInput').value);
     
     let apiUrl = '';
     let payload = { quantity: qty }; // For sales
@@ -1359,9 +1357,9 @@ if (processRepackBtn) {
     processRepackBtn.addEventListener('click', async () => {
         const payload = {
             source_item_code: document.getElementById('repackSourceInput').value,
-            source_qty: parseInt(document.getElementById('repackSourceQty').value),
+            source_qty: parseFloat(document.getElementById('repackSourceQty').value),
             result_item_code: document.getElementById('repackResultInput').value,
-            result_qty: parseInt(document.getElementById('repackResultQty').value)
+            result_qty: parseFloat(document.getElementById('repackResultQty').value)
         };
 
         if (!payload.source_item_code || !payload.result_item_code) {
@@ -1504,7 +1502,7 @@ async function submitArEdit() {
         id: document.getElementById('edit-ar-id').value,
         customer_name: document.getElementById('edit-ar-name').value,
         item_taken: document.getElementById('edit-ar-item').value,
-        qty: parseInt(document.getElementById('edit-ar-qty').value),
+        qty: parseFloat(document.getElementById('edit-ar-qty').value),
         base_debt: parseFloat(document.getElementById('edit-ar-debt').value),
         pin: document.getElementById('edit-ar-pin').value
     };
@@ -1534,7 +1532,7 @@ function calculateLiveTotal() {
     
     // Only do the math if they are buying stock
     if (type === 'purchase') {
-        const qty = parseInt(document.getElementById('transactionQuantity').value) || 0;
+        const qty = parseFloat(document.getElementById('transactionQuantity').value) || 0;
         const cost = parseFloat(document.getElementById('transactionCostPrice').value) || 0;
         
         // Multiply them
@@ -1574,7 +1572,7 @@ async function submitLedgerDelete() {
     const payload = {
         id: document.getElementById('delete-ledger-id').value,
         item_code: document.getElementById('delete-ledger-item').value,
-        qty: parseInt(document.getElementById('delete-ledger-qty').value) || 0,
+        qty: parseFloat(document.getElementById('delete-ledger-qty').value) || 0,
         pin: document.getElementById('delete-ledger-pin').value
     };
 
