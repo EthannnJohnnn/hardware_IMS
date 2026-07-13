@@ -325,6 +325,11 @@ async function loadDashboardSummary() {
         const profitText = document.getElementById('netProfitText');
         if (profitText) profitText.innerText = currencyFormatter.format(data.net_amount || 0);
 
+        const inventoryValueText = document.getElementById('totalInventoryValueText');
+        if (inventoryValueText) {
+            inventoryValueText.innerText = currencyFormatter.format(data.current_inventory_value || 0);
+        }
+
         const purchResponse = await fetch('/api/ledger/purchases');
         const purchases = await purchResponse.json();
 
