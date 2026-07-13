@@ -36,21 +36,15 @@ const ProductModel = {
     },
 
 
-    // PHASE 21: UPDATE PRODUCT MODEL (FIXED FOR ITEM_CODE) 
-    updateProduct: (original_item_code, item_code, item_name, cost_price, srp, callback) => {
+    updateProduct: (original_item_code, item_code, item_name, cost_price, srp, current_stock, callback) => {
         const sql = `
             UPDATE products 
-            SET item_code = ?, 
-                item_name = ?, 
-                cost_price = ?, 
-                srp = ?
+            SET item_code = ?, item_name = ?, cost_price = ?, srp = ?, current_stock = ?
             WHERE item_code = ?
         `;
-        
-        // Use the original_item_code to find it, then overwrite it!
-        db.run(sql, [item_code, item_name, cost_price, srp, original_item_code], function(err) {
-            if (err) return callback(err, null);
-            callback(null, { updatedRows: this.changes });
+        db.run(sql, [item_code, item_name, cost_price, srp, current_stock, original_item_code], function(err) {
+            if (err) return callback(err);
+            callback(null, { changes: this.changes });
         });
     }
 };

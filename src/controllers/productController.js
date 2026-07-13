@@ -32,12 +32,19 @@ const productController = {
         });
     },
 
-    // ✨ PHASE 20: EDIT INVENTORY CONTROLLER ✨
-    // ✨ PHASE 20: EDIT INVENTORY CONTROLLER (FIXED) ✨
     editInventory: (req, res) => {
-        const { original_item_code, item_code, item_name, cost_price, srp } = req.body;
+        // 1. Grab current_stock from the request body
+        const { original_item_code, item_code, item_name, cost_price, srp, current_stock } = req.body;
         
-        ProductModel.updateProduct(original_item_code, item_code, item_name, cost_price, srp, (err, data) => {
+        // 2. Force the stock to be a safe decimal (in case they type 1.5)
+        const decimalStock = parseFloat(current_stock);
+
+        if (isNaN(decimalStock) || decimalStock < 0) {
+            return res.status(400).json({ error: "Invalid stock amount." });
+        }
+        
+        // 3. Pass decimalStock into the model
+        ProductModel.updateProduct(original_item_code, item_code, item_name, cost_price, srp, decimalStock, (err, data) => {
             if (err) {
                 console.error("Error updating inventory:", err);
                 return res.status(500).json({ error: "Failed to update item" });

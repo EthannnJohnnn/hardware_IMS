@@ -40,7 +40,7 @@ function renderInventoryTable(products) {
                     </button>
                     
                     <button class="btn btn-sm btn-outline-primary shadow-sm px-3 ms-1" 
-                            onclick="openEditModal('${product.item_code}', '${product.item_code}', '${product.item_name}', ${product.cost_price}, ${product.srp})">
+                            onclick="openEditModal('${product.item_code}', '${product.item_code}', '${product.item_name}', ${product.cost_price}, ${product.srp}, ${product.current_stock})">
                         <i class="bi bi-pencil-square"></i>
                     </button>
                 </td>
@@ -1330,21 +1330,17 @@ document.getElementById('saveLedgerEditBtn').addEventListener('click', async () 
     } catch (error) { console.error(error); }
 });
 
-// ==========================================
-// ✨ PHASE 22: EDIT PRODUCT DETAILS MODAL ✨
-// ==========================================
-// Opens the inventory edit modal and pre-fills it with the clicked row's data.
-// Uses item_code as the identifier (not product.id) to stay consistent with
-// how every other function in this file (openTransactionModal, calculateLiveTotal,
-// calculateExchangeMath, etc.) already looks products up.
-// ✨ Phase 22: Open the Modal (Fixed parameter order)
-function openEditModal(original_code, current_code, name, cost, srp) {
+
+function openEditModal(original_code, current_code, name, cost, srp, stock) {
     // 1. Inject the data into the Modal input boxes
     document.getElementById('edit-item-id').value = original_code;
     document.getElementById('edit-item-code').value = current_code;
     document.getElementById('edit-item-name').value = name;
     document.getElementById('edit-cost-price').value = cost;
     document.getElementById('edit-srp').value = srp;
+    
+    // ✨ PHASE 33: Inject the stock into the new box
+    document.getElementById('edit-stock').value = stock;
     
     // 2. Clear out the PIN box so it's fresh every time
     document.getElementById('edit-admin-pin').value = "";
@@ -1398,12 +1394,6 @@ if (processRepackBtn) {
     });
 }
 
-// ==========================================
-// ✨ PHASE 23: SUBMIT INVENTORY EDITS (SECURE)
-// ==========================================
-// ==========================================
-// ✨ PHASE 23: SUBMIT INVENTORY EDITS (FIXED)
-// ==========================================
 async function submitInventoryEdit() {
     // 1. Grab the ORIGINAL item code from the hidden box
     const original_item_code = document.getElementById('edit-item-id').value;
@@ -1413,17 +1403,22 @@ async function submitInventoryEdit() {
     const item_name = document.getElementById('edit-item-name').value;
     const cost_price = parseFloat(document.getElementById('edit-cost-price').value);
     const srp = parseFloat(document.getElementById('edit-srp').value);
+    
+    // ✨ PHASE 33: Grab the new stock value
+    const current_stock = parseFloat(document.getElementById('edit-stock').value);
+
     const pin = document.getElementById('edit-admin-pin').value;
 
     if (!pin) return alert("⚠️ Please enter the Admin PIN to authorize changes.");
 
-    // 3. Package it all up (including the original code!)
+    // 3. Package it all up (including the new stock and the original code!)
     const payload = { 
         original_item_code: original_item_code, 
         item_code: item_code, 
         item_name: item_name, 
         cost_price: cost_price, 
         srp: srp, 
+        current_stock: current_stock, // ✨ Include it in the payload
         pin: pin 
     };
 
@@ -1449,11 +1444,6 @@ async function submitInventoryEdit() {
     }
 }
 
-// ==========================================
-// ✨ PHASE 23: SECURE EDIT FOR EXPENSES & AR
-// ==========================================
-
-// --- EXPENSES LOGIC ---
 function openEditExpenseModal(id, desc, amount) {
     document.getElementById('edit-exp-id').value = id;
     document.getElementById('edit-exp-desc').value = desc;

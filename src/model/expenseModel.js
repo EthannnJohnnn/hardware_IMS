@@ -28,18 +28,16 @@ const ExpenseModel = {
         });
     },
 
-    // ✨ NEW Phase 21: Update Expense Data
     updateExpense: (id, description, amount, callback) => {
-        const sql = `
-            UPDATE operating_expenses 
-            SET description = ?, amount = ? 
-            WHERE id = ?
-        `;
+        // FIXED: Changed table name from 'operating_expenses' to 'expenses'
+        const sql = `UPDATE expenses SET description = ?, amount = ? WHERE id = ?`;
+        
         db.run(sql, [description, amount, id], function(err) {
             if (err) {
-                return callback(err, null);
+                console.error("Database error in updateExpense:", err);
+                return callback(err);
             }
-            callback(null, { updatedRows: this.changes });
+            callback(null, { changes: this.changes });
         });
     },
 

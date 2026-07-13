@@ -118,17 +118,18 @@ const ARModel = {
         });
     },
 
-    // ✨ NEW Phase 21: Update Debt Data
-    updateDebt: (id, customer_name, item_taken, qty, base_debt, callback) => {
+    // ✨ FIXED Phase 21: Update Debt Data
+    updateDebt: (id, customer_name, item_code, qty, total_amount, callback) => {
         const sql = `
-            UPDATE accounts_receivable 
+            UPDATE ar 
             SET customer_name = ?, 
-                item_taken = ?, 
+                item_code = ?, 
                 qty = ?, 
-                base_debt = ? 
+                total_amount = ? 
             WHERE id = ?
         `;
-        db.run(sql, [customer_name, item_taken, qty, base_debt, id], function(err) {
+        // Notice we are mapping the incoming variables to the correct database columns
+        db.run(sql, [customer_name, item_code, qty, total_amount, id], function(err) {
             if (err) {
                 return callback(err, null);
             }

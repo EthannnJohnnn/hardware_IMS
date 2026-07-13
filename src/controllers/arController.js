@@ -10,7 +10,6 @@ const arController = {
     addDebt: (req, res) => {
         const { customer_name, item_code, qty } = req.body;
         
-        // Validation for the new inventory-based parameters
         if (!customer_name || !item_code || !qty || qty <= 0) {
             return res.status(400).json({ error: "Invalid debt parameters. Ensure all fields are filled correctly." });
         }
@@ -26,12 +25,15 @@ const arController = {
             res.json(result);
         });
     },
-    // Add this inside your existing controller object
     editDebt: (req, res) => {
         const { id, customer_name, item_taken, qty, base_debt } = req.body;
         
-        // We assume arModel.updateDebt will be built in Phase 21
-        arModel.updateDebt(id, customer_name, item_taken, qty, base_debt, (err, data) => {
+        // 1. Force the numerical values to be safe decimals
+        const decimalQty = parseFloat(qty);
+        const decimalBaseDebt = parseFloat(base_debt);
+
+        // 2. FIXED TYPO: Changed arModel to ARModel (Capital AR)
+        ARModel.updateDebt(id, customer_name, item_taken, decimalQty, decimalBaseDebt, (err, data) => {
             if (err) {
                 console.error("Error updating debt:", err);
                 return res.status(500).json({ error: "Failed to update accounts receivable" });
@@ -39,11 +41,9 @@ const arController = {
             res.json({ message: "Account Receivable updated successfully" });
         });
     },
-
     deleteAR: (req, res) => {
         const { id, item_code, qty, pin } = req.body;
         
-        // 🔒 Check Admin PIN
         if (pin !== process.env.ADMIN_PIN && pin !== '1234') {
             return res.status(401).json({ error: "Unauthorized: Invalid Admin PIN" });
         }
