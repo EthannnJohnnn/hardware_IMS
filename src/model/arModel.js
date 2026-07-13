@@ -1,15 +1,23 @@
 const db = require('../config/database');
 
 const ARModel = {
-    // --- 1. FETCH AR & CALCULATE PENALTIES ON THE FLY ---
-    getAllAR: (callback) => {
-        // We select qty AS quantity so it perfectly matches the frontend JavaScript
-        const sql = `
+    // ✨ PHASE 35: Filter AR by Timeframe
+    getAllAR: (filter, callback) => {
+        let sql = `
             SELECT ar.*, ar.qty AS quantity, p.item_name 
             FROM ar 
             LEFT JOIN products p ON ar.item_code = p.item_code
-            ORDER BY ar.status DESC, ar.id DESC
         `;
+        
+        if (filter === 'daily') {
+            sql += ` WHERE DATE(ar.date) = DATE('now', 'localtime')`;
+        } else if (filter === 'weekly') {
+            sql += ` WHERE DATE(ar.date) >= DATE('now', '-7 days', 'localtime')`;
+        } else if (filter === 'monthly') {
+            sql += ` WHERE DATE(ar.date) >= DATE('now', '-30 days', 'localtime')`;
+        }
+        
+        sql += ` ORDER BY ar.status DESC, ar.id DESC`;
         
         db.all(sql, [], (err, rows) => {
             if (err) return callback(err, null);
@@ -24,11 +32,9 @@ const ARModel = {
                 
                 row.days_overdue = diffDays;
                 row.penalty = 0;
-                row.base_debt = row.total_amount; // Using your existing total_amount column
+                row.base_debt = row.total_amount; 
 
-                // Apply 2% Monthly penalty ONLY if Unpaid and past 7 days
                 if (row.status === 'Unpaid' && diffDays > 7) {
-                    // Math.ceil ensures day 8 is 1 month late, day 38 is 2 months late, etc.
                     const monthsLate = Math.ceil((diffDays - 7) / 30);
                     row.penalty = (row.base_debt * 0.02) * monthsLate;
                 }

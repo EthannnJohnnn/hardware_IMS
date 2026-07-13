@@ -2,7 +2,8 @@ const ExpenseModel = require('../model/expenseModel');
 
 const expenseController = {
     getExpenses: (req, res) => {
-        ExpenseModel.getAllExpenses((err, data) => {
+        const filter = req.query.filter || 'all_time'; // Default to all_time if no filter
+        ExpenseModel.getAllExpenses(filter, (err, data) => {
             if (err) return res.status(500).json({ error: "Failed to fetch expenses" });
             res.json(data);
         });

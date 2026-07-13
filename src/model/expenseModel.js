@@ -15,15 +15,23 @@ const ExpenseModel = {
         });
     },
 
-    // 2. Get all expenses (for our future reports)
-    getAllExpenses: (callback) => {
-        const sql = `SELECT * FROM expenses ORDER BY expense_date DESC`;
+    // ✨ PHASE 35: Filter Expenses by Timeframe
+    getAllExpenses: (filter, callback) => {
+        let sql = `SELECT * FROM expenses`;
         
+        // Dynamically add the timeframe filter
+        if (filter === 'daily') {
+            sql += ` WHERE DATE(expense_date) = DATE('now', 'localtime')`;
+        } else if (filter === 'weekly') {
+            sql += ` WHERE DATE(expense_date) >= DATE('now', '-7 days', 'localtime')`;
+        } else if (filter === 'monthly') {
+            sql += ` WHERE DATE(expense_date) >= DATE('now', '-30 days', 'localtime')`;
+        }
+        
+        sql += ` ORDER BY expense_date DESC, id DESC`;
+
         db.all(sql, [], (err, rows) => {
-            if (err) {
-                console.error("Error fetching expenses:", err);
-                return callback(err, null);
-            }
+            if (err) return callback(err, null);
             return callback(null, rows);
         });
     },

@@ -2,7 +2,8 @@ const ARModel = require('../model/arModel');
 
 const arController = {
     getAllAR: (req, res) => {
-        ARModel.getAllAR((err, data) => {
+        const filter = req.query.filter || 'all_time'; // Default to all_time if no filter
+        ARModel.getAllAR(filter, (err, data) => {
             if (err) return res.status(500).json({ error: "Failed to fetch AR records" });
             res.json(data);
         });

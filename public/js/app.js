@@ -611,7 +611,8 @@ async function loadPurchaseLedger(filter = 'all') {
 
 async function loadExpenses() {
     try {
-        const response = await fetch('/api/expenses');
+        const filter = document.getElementById('expenseTimeframe')?.value || 'all_time';
+        const response = await fetch(`/api/expenses?filter=${filter}`);
         const expenses = await response.json();
         const tableBody = document.getElementById('expenseTableBody');
         if(!tableBody) return;
@@ -670,7 +671,8 @@ document.getElementById('saveExpenseBtn').addEventListener('click', async () => 
 // ==========================================
 async function loadAR() {
     try {
-        const response = await fetch('/api/ar'); // Ensure this matches your route
+        const filter = document.getElementById('arTimeframe')?.value || 'all_time';
+        const response = await fetch(`/api/ar?filter=${filter}`);
         const arData = await response.json();
         const tableBody = document.getElementById('arTableBody');
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
@@ -1608,6 +1610,10 @@ async function submitLedgerDelete() {
         alert("System Error. Check console."); 
     }
 }
+
+// ✨ PHASE 35: Listeners to reload tables when timeframe changes
+document.getElementById('expenseTimeframe')?.addEventListener('change', loadExpenses);
+document.getElementById('arTimeframe')?.addEventListener('change', loadAR);
 
 // Initialize the workspace when the app loads
 loadStickyNote();
