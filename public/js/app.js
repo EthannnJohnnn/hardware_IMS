@@ -5,6 +5,14 @@
 // ==========================================
 let allProductsData = []; 
 
+// ✨ PHASE 32: Safe String Escaping for HTML Buttons
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.toString()
+        .replace(/'/g, "\\'")     // Escapes single quotes for JavaScript (e.g., Elmer\'s)
+        .replace(/"/g, '&quot;'); // Escapes double quotes for HTML (e.g., 2&quot;)
+}
+
 async function loadProducts() {
     try {
         const response = await fetch('/api/products');
@@ -26,21 +34,26 @@ function renderInventoryTable(products) {
         if (product.current_stock <= 5) stockBadge = 'bg-warning text-dark';
         if (product.current_stock === 0) stockBadge = 'bg-danger';
 
+        // ✨ STEP 2: Process the name through the escape function
+        const safeItemName = escapeHTML(product.item_name);
+
         const row = `
             <tr>
                 <td class="fw-bold text-muted">${product.item_code}</td>
-                <td class="fw-bold">${product.item_name}</td>
+                <!-- It's also good practice to use the safe name here in the visible table -->
+                <td class="fw-bold">${safeItemName}</td>
                 <td>₱${product.cost_price.toFixed(2)}</td>
                 <td>₱${product.srp.toFixed(2)}</td>
                 <td><span class="badge ${stockBadge}">${product.current_stock}</span></td>
                 <td>
+                    <!-- ✨ STEP 3: Use safeItemName in both buttons! -->
                     <button class="btn btn-sm btn-outline-primary fw-bold" 
-                        onclick="openTransactionModal('${product.item_code}', '${product.item_name}', ${product.current_stock})">
+                        onclick="openTransactionModal('${product.item_code}', '${safeItemName}', ${product.current_stock})">
                         Transact
                     </button>
                     
                     <button class="btn btn-sm btn-outline-primary shadow-sm px-3 ms-1" 
-                            onclick="openEditModal('${product.item_code}', '${product.item_code}', '${product.item_name}', ${product.cost_price}, ${product.srp}, ${product.current_stock})">
+                            onclick="openEditModal('${product.item_code}', '${product.item_code}', '${safeItemName}', ${product.cost_price}, ${product.srp}, ${product.current_stock})">
                         <i class="bi bi-pencil-square"></i>
                     </button>
                 </td>
