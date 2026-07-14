@@ -869,3 +869,279 @@ select:focus-visible,
     pointer-events: none;
     display: block;
 }
+
+/* ==========================================================================
+   13. MODAL HEADER SYSTEM — one accent language across every modal
+   ==========================================================================
+   Every modal previously spoke a different visual dialect: solid
+   bg-warning/bg-danger/bg-dark flood-fills with white text on the "risky"
+   modals, a plain slate-50 header everywhere else. That reads as several
+   people building at different times. Replaced with a single quiet header
+   (same slate-50 used app-wide) that carries meaning through a thin left
+   accent rule + a tinted icon chip instead of painting the whole bar — so
+   a delete confirmation still feels urgent, but still feels like *this*
+   product, not a different one. */
+.modal-header.bg-warning,
+.modal-header.bg-danger,
+.modal-header.bg-dark,
+.modal-header.bg-light,
+.modal-header.text-white {
+    background-color: var(--slate-50) !important;
+    color: var(--slate-900) !important;
+    border-bottom: 1px solid var(--border-smooth);
+    position: relative;
+    padding-left: calc(2rem + 4px);
+}
+
+.modal-header.bg-warning::before,
+.modal-header.bg-danger::before,
+.modal-header.bg-dark::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+.modal-header.bg-warning::before { background: var(--warning); }
+.modal-header.bg-danger::before  { background: var(--danger); }
+.modal-header.bg-dark::before    { background: var(--slate-700); }
+
+.modal-header .modal-title {
+    color: var(--slate-900) !important;
+    display: flex;
+    align-items: center;
+}
+
+/* Every modal title gets an icon chip, colored to match its accent rule,
+   instead of a bare glyph sitting on a loud background. */
+.modal-header .modal-title i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    font-size: 0.95rem !important;
+    margin-right: 0.6rem !important;
+    background: var(--primary-faded);
+    color: var(--primary);
+    flex-shrink: 0;
+}
+.modal-header.bg-warning .modal-title i { background: var(--warning-faded); color: var(--warning); }
+.modal-header.bg-danger  .modal-title i { background: var(--danger-faded);  color: var(--danger); }
+.modal-header.bg-dark    .modal-title i { background: var(--slate-100);    color: var(--slate-700); }
+
+/* Close buttons: the white variant was only ever needed against a solid
+   dark fill, which no longer exists here, so give it back its normal ink. */
+.modal-header .btn-close-white {
+    filter: none;
+    opacity: 0.45;
+}
+.modal-header .btn-close-white:hover {
+    opacity: 0.85;
+}
+
+/* ==========================================================================
+   14. TWO-COLUMN WORKFLOW PANELS (Item Exchange, Bulk Repackaging)
+   ==========================================================================
+   Both screens share the same "before / after" shape but were built as a
+   plain Bootstrap column pair split by a hairline border. Turned into two
+   distinct tinted zones, so the left/right halves read as two sides of one
+   tool — consistent with the icon-chip color language used everywhere else. */
+#view-exchange .col-md-6.border-end,
+#view-repack .col-md-6.border-end,
+#view-exchange .col-md-6.ps-4,
+#view-repack .col-md-6.ps-4 {
+    border-color: transparent !important;
+    border-radius: 16px;
+    padding: 1.5rem !important;
+}
+
+#view-exchange .col-md-6:first-child { background: var(--danger-faded); }
+#view-exchange .col-md-6:last-child  { background: var(--success-faded); }
+#view-repack   .col-md-6:first-child { background: var(--warning-faded); }
+#view-repack   .col-md-6:last-child  { background: var(--primary-faded); }
+
+#view-exchange .row.g-4,
+#view-repack .row.g-4 {
+    row-gap: 1rem;
+}
+
+#view-exchange h6,
+#view-repack h6 {
+    letter-spacing: -0.01em;
+}
+
+/* Inputs sit on a tinted panel now, so lift them back to full white for
+   contrast instead of the usual slate-50 field fill. */
+#view-exchange .form-control,
+#view-repack .form-control {
+    background-color: var(--bg-surface);
+}
+
+/* Big value read-outs (Return / Taken value) — same scale & tracking as
+   the dashboard KPI numbers, so a "total" always looks like a "total". */
+#returnValueDisplay,
+#takenValueDisplay {
+    letter-spacing: -0.03em;
+    font-size: 1.85rem;
+}
+
+/* ==========================================================================
+   15. INLINE NOTICE BANNERS
+   ==========================================================================
+   The lone "Ensure separate SKUs exist first" callout used raw Bootstrap
+   badge opacity utilities. Mapped onto the same faded-token language as
+   every status badge elsewhere in the app. */
+.badge.bg-info {
+    background-color: var(--info-faded) !important;
+    color: var(--info) !important;
+    border-color: transparent !important;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 8px 14px;
+}
+
+/* ==========================================================================
+   16. BORDERED SUMMARY TABLES (Executive Summary Report)
+   ==========================================================================
+   table-bordered/table-light are Bootstrap defaults with gray borders that
+   don't exist anywhere else in the app's palette. Reskinned to the same
+   slate hairlines as every other table, with the "Net Amount" row picked
+   out using the primary accent instead of plain gray. */
+.table-bordered {
+    border-color: var(--slate-100) !important;
+}
+.table-bordered th,
+.table-bordered td {
+    border-color: var(--slate-100) !important;
+    padding: 14px 24px;
+}
+.table-bordered thead.table-light th {
+    background-color: var(--slate-50) !important;
+    color: var(--slate-600);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--slate-200) !important;
+}
+.table-bordered tbody tr.bg-light {
+    background-color: var(--primary-faded) !important;
+}
+.table-bordered tbody tr.bg-light td {
+    border-top: 2px solid var(--primary) !important;
+    border-bottom: 2px solid var(--primary) !important;
+}
+
+/* ==========================================================================
+   17. SECURE FIELD CALLOUTS (Admin PIN blocks)
+   ==========================================================================
+   Kept the semantic red (this is a real authorization gate) but tightened
+   radius/spacing/label treatment to match the rest of the token system
+   instead of stock Bootstrap alert proportions. */
+.bg-danger.bg-opacity-10 {
+    border-radius: 14px !important;
+}
+.bg-danger.bg-opacity-10.border-danger,
+.bg-danger.bg-opacity-10.border.border-danger {
+    border-width: 1px !important;
+}
+.bg-danger.bg-opacity-10 .form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+}
+.bg-danger.bg-opacity-10 input[type="password"] {
+    background-color: var(--bg-surface);
+    border-color: var(--danger);
+}
+.bg-danger.bg-opacity-10 input[type="password"]:focus {
+    box-shadow: 0 0 0 4px var(--danger-faded);
+}
+
+/* ==========================================================================
+   18. INLINE ALERTS
+   ==========================================================================
+   Bootstrap's default alert-warning/alert-danger use their own yellow/red
+   swatches, one shade off from --warning/--danger. Mapped onto the app's
+   own faded tokens so a warning banner matches a warning badge. */
+.alert {
+    border: none;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    padding: 0.9rem 1.1rem;
+}
+.alert-warning {
+    background-color: var(--warning-faded);
+    color: #92650a;
+}
+.alert-danger {
+    background-color: var(--danger-faded);
+    color: #b91c1c;
+}
+
+/* ==========================================================================
+   19. TOTAL / VALUE READOUTS
+   ==========================================================================
+   Every screen eventually surfaces "the number that matters" — a live
+   sale total, a purchase total, an executive net figure. Give the ones
+   that sit in their own callout box the same rounded container language
+   as the rest of the app (cards, chips, badges all share this radius). */
+#liveTotalDisplay,
+#purchaseTotalDisplay {
+    border-radius: 14px !important;
+}
+#liveTotalAmount,
+#purchaseTotalAmount,
+#execNetAmount {
+    letter-spacing: -0.03em;
+}
+
+/* ==========================================================================
+   20. SMALL-SCREEN FALLBACK
+   ==========================================================================
+   The rail + floating navbar layout assumes desktop width. Below that,
+   drop the sidebar into a normal top block and let the nav pills wrap
+   into a compact row, rather than overlapping page content. */
+@media (max-width: 900px) {
+    #sidebar {
+        position: relative;
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        top: 0;
+        padding: 1.25rem;
+    }
+    #main-content {
+        margin-left: 0;
+        padding: 1.25rem 1.25rem 2rem 1.25rem;
+    }
+    #sidebarNav {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: 0.4rem !important;
+    }
+    #sidebarNav .nav-link {
+        padding: 8px 12px;
+        font-size: 0.82rem;
+    }
+    .nav-pills .nav-link.active::before {
+        display: none;
+    }
+    .navbar {
+        top: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .navbar form.d-flex.w-50 {
+        display: none !important;
+    }
+    .navbar-user .user-name,
+    .navbar-user .user-role {
+        display: none;
+    }
+}
