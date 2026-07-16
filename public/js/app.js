@@ -554,22 +554,31 @@ async function loadSalesLedger(filter = 'all') {
         const response = await fetch(`/api/ledger/sales?filter=${filter}`);
         const sales = await response.json();
         const tableBody = document.getElementById('salesLedgerTableBody');
-        if(!tableBody) return;
+        
+        if (!tableBody) return;
         tableBody.innerHTML = ''; 
+        
         const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
 
         sales.forEach(sale => {
+            // 1. Format the date cleanly so it doesn't look like a messy timestamp
+            const formattedDate = new Date(sale.date).toLocaleDateString();
+            
+            // 2. Escape quotes in the item name so it doesn't break the HTML (Phase 32 fix)
+            const safeItemName = sale.item_name ? sale.item_name.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+
             const row = `
                 <tr>
-                    <td class="text-muted small">${sale.date}</td>
+                    <td class="text-muted small">${formattedDate}</td>
                     <td class="text-muted fw-bold">${sale.item_code}</td>
-                    <td class="text-start fw-bold text-dark">${sale.item_name}</td>
+                    <td class="text-start fw-bold text-dark">${safeItemName}</td>
                     <td class="text-muted">${currencyFormatter.format(sale.unit_price)}</td>
                     <td class="fw-bold text-primary">${sale.qty_sold}</td>
-                    <td class="fw-bold text-danger">-${currencyFormatter.format(sale.discount)}</td> 
+                    <td class="fw-bold text-danger">-${currencyFormatter.format(sale.discount || 0)}</td> 
                     <td class="fw-bold text-success">${currencyFormatter.format(sale.total_sales)}</td>
                     <td>
                         <div class="btn-group btn-group-sm shadow-sm" role="group">
+                            <!-- Using your attemptEdit function perfectly -->
                             <button class="btn btn-outline-primary px-3" onclick="attemptEdit(${sale.id}, 'sale', ${sale.qty_sold})">
                                 <i class="bi bi-pencil-square"></i>
                             </button>
@@ -582,7 +591,9 @@ async function loadSalesLedger(filter = 'all') {
             `;
             tableBody.innerHTML += row;
         });
-    } catch (error) { console.error("Error loading sales ledger:", error); }
+    } catch (error) { 
+        console.error("Error loading sales ledger:", error); 
+    }
 }
 
 async function loadPurchaseLedger(filter = 'all') {

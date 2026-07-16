@@ -4,26 +4,31 @@ const db = require('../config/database');
 // 2. Create the TransactionModel object
 const TransactionModel = {
 
-    // --- FUNCTION 1: Record a Sale (Subtracts from stock) ---
-    // 'saleData' will contain { item_code: "AB-001", quantity: 2, discount: 50 }
     recordSale: (saleData, callback) => {
-        
-        // PHASE 15 UPDATE: Ensure discount is at least 0 if left blank by the cashier
         const discountAmount = saleData.discount || 0; 
 
-        // Step A: Save the record into the 'sales' history table (Now includes discount!)
-        const insertSaleQuery = `INSERT INTO sales (item_code, quantity, discount) VALUES (?, ?, ?)`;
+        const insertSaleQuery = `
+            INSERT INTO sales (item_code, quantity, discount, item_name, cost_price, srp)
+            SELECT ?, ?, ?, item_name, cost_price, srp
+            FROM products
+            WHERE item_code = ?
+        `;
+
+        const saleValues = [
+            saleData.item_code, 
+            saleData.quantity, 
+            discountAmount, 
+            saleData.item_code // Sent a second time to satisfy the WHERE clause lookup
+        ];
 
         // We run the first query...
-        db.run(insertSaleQuery, [saleData.item_code, saleData.quantity, discountAmount], function(err) {
+        db.run(insertSaleQuery, saleValues, function(err) {
             if (err) {
                 console.error("Error recording sale:", err);
                 return callback(err, null);
             }
 
             // Step B: If the sale is saved successfully, we update the product's stock.
-            // Notice the math here: "current_stock = current_stock - ?" 
-            // This exactly mimics the Excel subtraction formula!
             const updateStockQuery = `UPDATE products SET current_stock = current_stock - ? WHERE item_code = ?`;
 
             // We run the second query nested inside the first one to guarantee order
@@ -40,26 +45,29 @@ const TransactionModel = {
     },
 
     // --- FUNCTION 2: Record a Purchase/Restock (Adds to stock) ---
-    // 'purchaseData' will contain { item_code: "AB-001", quantity: 50, cost_price: 100, supplier: "Hardware Inc" }
-    // --- FUNCTION 2: Record a Purchase/Restock (Adds to stock) ---
+    // 'purchaseData' will contain { item_code: "AB-001", quantity: 50, total_price: 1500, supplier: "Hardware Inc" }
     recordPurchase: (purchaseData, callback) => {
         
-        // We leave the column name as cost_price so we don't break your database table,
-        // but we will inject the calculated TOTAL cost into it!
+        // ✨ PHASE 36 UPDATE: Save the record into the 'purchases' history table
+        // This pulls the item_name and srp from the 'products' table dynamically 
+        // while injecting the total cost (total_price) into the cost_price column.
         const insertPurchaseQuery = `
-            INSERT INTO purchases (item_code, quantity, cost_price, supplier) 
-            VALUES (?, ?, ?, ?)
+            INSERT INTO purchases (item_code, quantity, cost_price, supplier, item_name, srp) 
+            SELECT ?, ?, ?, ?, item_name, srp
+            FROM products
+            WHERE item_code = ?
         `;
 
         // ✨ PHASE 25 UPDATE: Catch the total_price from the frontend!
-        const values = [
+        const purchaseValues = [
             purchaseData.item_code, 
             purchaseData.quantity, 
-            purchaseData.total_price, // 👈 THE MAGIC FIX IS HERE (₱1,500)
-            purchaseData.supplier
+            purchaseData.total_price, // Bound to the cost_price column (Total cost of purchase)
+            purchaseData.supplier,
+            purchaseData.item_code     // Sent a second time to satisfy the WHERE clause lookup
         ];
 
-        db.run(insertPurchaseQuery, values, function(err) {
+        db.run(insertPurchaseQuery, purchaseValues, function(err) {
             if (err) {
                 console.error("Error recording purchase:", err);
                 return callback(err, null);
