@@ -1275,10 +1275,38 @@ document.getElementById('processExchangeBtn').addEventListener('click', async ()
 let pendingEditData = null; // Stores what the user clicked while they enter their PIN
 
 // 1. Expose function to trigger the PIN modal from the HTML buttons
-window.attemptEdit = function(id, type, currentQty, currentCost, currentSupplier) {
-    pendingEditData = { id, type, qty: currentQty, cost: currentCost, supplier: currentSupplier };
-    document.getElementById('adminPinInput').value = '';
-    new bootstrap.Modal(document.getElementById('adminPinModal')).show();
+window.attemptEdit = function(id, type, qty, priceOrCost = 0, discountOrSupplier = 0) {
+    // 1. Pre-fill the hidden inputs and the quantity
+    document.getElementById('editTargetId').value = id;
+    document.getElementById('editTargetType').value = type;
+    document.getElementById('editQtyInput').value = qty;
+    
+    // Always clear the PIN field for security
+    document.getElementById('editLedgerPin').value = ''; 
+
+    // 2. Grab the specific sections
+    const saleFields = document.getElementById('editSaleFields');
+    const purchaseFields = document.getElementById('editPurchaseFields');
+
+    // 3. Toggle visibility and fill data based on transaction type
+    if (type === 'sale') {
+        saleFields.classList.remove('d-none');
+        purchaseFields.classList.add('d-none');
+        
+        document.getElementById('editPriceInput').value = priceOrCost;
+        document.getElementById('editDiscountInput').value = discountOrSupplier;
+        
+    } else if (type === 'purchase') {
+        saleFields.classList.add('d-none');
+        purchaseFields.classList.remove('d-none');
+        
+        document.getElementById('editCostInput').value = priceOrCost;
+        document.getElementById('editSupplierInput').value = discountOrSupplier;
+    }
+
+    // 4. Open the new Unified Edit Modal directly
+    const modal = new bootstrap.Modal(document.getElementById('editLedgerModal'));
+    modal.show();
 };
 
 // 2. Verify the PIN with the backend
@@ -1314,48 +1342,59 @@ document.getElementById('verifyPinBtn').addEventListener('click', async () => {
     } catch (error) { console.error(error); }
 });
 
-// 3. Save the Correction
+// ✨ PHASE 37: The correct Save Button Listener
 document.getElementById('saveLedgerEditBtn').addEventListener('click', async () => {
     const id = document.getElementById('editTargetId').value;
     const type = document.getElementById('editTargetType').value;
-    const qty = parseFloat(document.getElementById('editQtyInput').value);
+    const pin = document.getElementById('editLedgerPin').value;
     
-    let apiUrl = '';
-    let payload = { quantity: qty }; // For sales
+    if (!pin) return alert("⚠️ Admin PIN Required.");
 
-    if (type === 'purchase') {
-        apiUrl = `/api/admin/purchases/${id}`;
-        payload = { 
-            newQty: qty, 
-            newCost: parseFloat(document.getElementById('editCostInput').value), 
-            newSupplier: document.getElementById('editSupplierInput').value 
-        };
-    } else {
-        apiUrl = `/api/admin/sales/${id}`;
+    let endpoint = '';
+    let payload = { id, pin, newQty: parseFloat(document.getElementById('editQtyInput').value) };
+
+    if (isNaN(payload.newQty) || payload.newQty < 0.01) {
+        return alert("⚠️ Quantity must be greater than 0.");
+    }
+
+    // Attach specific data depending on which ledger we are editing
+    if (type === 'sale') {
+        // 👈 THE FIX IS HERE: Pointing to the new route we built!
+        endpoint = '/api/ledger/sales/edit'; 
+        payload.newPrice = parseFloat(document.getElementById('editPriceInput').value);
+        payload.newDiscount = parseFloat(document.getElementById('editDiscountInput').value);
+    } else if (type === 'purchase') {
+        // Make sure this matches your actual purchase edit route!
+        endpoint = `/api/admin/purchases/${id}`; 
+        payload.newCost = parseFloat(document.getElementById('editCostInput').value);
+        payload.newSupplier = document.getElementById('editSupplierInput').value;
     }
 
     try {
-        const response = await fetch(apiUrl, {
+        const response = await fetch(endpoint, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
+        
+        const data = await response.json();
 
         if (response.ok) {
-            bootstrap.Modal.getInstance(document.getElementById('editLedgerModal')).hide();
-            alert("Record successfully corrected! Inventory has been automatically recalculated.");
+            // Close safely using Bootstrap
+            const modalEl = document.getElementById('editLedgerModal');
+            bootstrap.Modal.getInstance(modalEl).hide();
             
-            // Refresh everything so the dashboard math updates instantly
-            if (typeof loadSalesLedger === 'function') loadSalesLedger();
-            if (typeof loadPurchaseLedger === 'function') loadPurchaseLedger();
-            if (typeof loadProducts === 'function') loadProducts();
-            if (typeof loadDashboardSummary === 'function') loadDashboardSummary();
+            // Reload the tables
+            if(typeof loadSalesLedger === 'function') loadSalesLedger();
+            if(typeof loadDashboardSummary === 'function') loadDashboardSummary();
         } else {
-            alert("Failed to correct ledger.");
+            alert("🛑 " + (data.error || "Failed to update record."));
         }
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+        console.error(error); 
+        alert("System Error."); 
+    }
 });
-
 
 function openEditModal(original_code, current_code, name, cost, srp, stock) {
     // 1. Inject the data into the Modal input boxes

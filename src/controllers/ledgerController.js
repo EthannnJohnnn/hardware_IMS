@@ -18,6 +18,24 @@ const ledgerController = {
             if (err) return res.status(500).json({ error: "Failed to load purchase ledger" });
             res.json(result);
         });
+    },
+
+    // ✨ NEW PHASE 37 CONTROLLER
+    editSaleTransaction: (req, res) => {
+        const { id, newQty, newPrice, newDiscount, pin } = req.body;
+
+        // Verify Admin PIN 
+        if (pin !== process.env.ADMIN_PIN) { 
+            return res.status(403).json({ error: "Invalid Admin PIN. Access Denied." });
+        }
+
+        const data = { newQty, newPrice, newDiscount };
+
+        // We removed the duplicate require() line here. It now correctly uses the one from Line 1!
+        LedgerModel.editSale(id, data, (err, result) => {
+            if (err) return res.status(500).json({ error: "Database error during update." });
+            res.json(result);
+        });
     }
 };
 

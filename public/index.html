@@ -781,6 +781,20 @@
                         <label class="form-label text-muted small fw-bold">Corrected Quantity</label>
                         <input type="number" class="form-control bg-light" id="editQtyInput" min="0.01" step="any">
                     </div>
+
+                    <!-- ✨ NEW PHASE 37: Fields specific to Sales -->
+                    <div id="editSaleFields" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Corrected Unit Price (₱)</label>
+                            <input type="number" step="0.01" class="form-control bg-light" id="editPriceInput">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Corrected Discount (₱)</label>
+                            <input type="number" step="0.01" class="form-control bg-light" id="editDiscountInput">
+                        </div>
+                    </div>
+
+                    <!-- EXISTING: Fields specific to Purchases -->
                     <div id="editPurchaseFields" class="d-none">
                         <div class="mb-3">
                             <label class="form-label text-muted small fw-bold">Corrected Cost Price (₱)</label>
@@ -791,6 +805,14 @@
                             <input type="text" class="form-control bg-light" id="editSupplierInput">
                         </div>
                     </div>
+
+                    <hr>
+                    <!-- ✨ Security: Admin PIN for adjustments -->
+                    <div class="mb-3">
+                        <label class="form-label text-danger small fw-bold"><i class="bi bi-shield-lock"></i> Admin PIN</label>
+                        <input type="password" class="form-control border-danger" id="editLedgerPin" placeholder="Required to authorize edit">
+                    </div>
+
                 </div>
                 <div class="modal-footer justify-content-between">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>

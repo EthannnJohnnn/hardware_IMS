@@ -63,19 +63,24 @@ const LedgerModel = {
         });
     },
 
-    editSale: (id, newQty, callback) => {
+    editSale: (id, data, callback) => {
         db.serialize(() => {
             db.run("BEGIN TRANSACTION");
             
+            // 1. Fetch the original mistake
             db.get(`SELECT item_code, quantity FROM sales WHERE id = ?`, [id], (err, oldSale) => {
                 if (err || !oldSale) { db.run("ROLLBACK"); return callback(new Error("Sale not found"), null); }
 
-                const stockDiff = oldSale.quantity - newQty;
+                // 2. Calculate the difference for inventory
+                const stockDiff = oldSale.quantity - data.newQty;
 
+                // 3. Update physical inventory
                 db.run(`UPDATE products SET current_stock = current_stock + ? WHERE item_code = ?`, [stockDiff, oldSale.item_code], function(err) {
                     if (err) { db.run("ROLLBACK"); return callback(err, null); }
 
-                    db.run(`UPDATE sales SET quantity = ? WHERE id = ?`, [newQty, id], function(err) {
+                    // 4. ✨ Overwrite ledger with new Qty, Price (srp), and Discount
+                    const updateSaleSql = `UPDATE sales SET quantity = ?, srp = ?, discount = ? WHERE id = ?`;
+                    db.run(updateSaleSql, [data.newQty, data.newPrice, data.newDiscount, id], function(err) {
                         if (err) { db.run("ROLLBACK"); return callback(err, null); }
                         
                         db.run("COMMIT"); 
