@@ -19,10 +19,15 @@ async function loadProducts() {
         const products = await response.json();
         allProductsData = products; // Keep this in sync for the live transaction calculator & filters
 
-        document.getElementById('totalProductsText').innerText = products.length + " Items";
-
-        renderInventoryTable(allProductsData);
-    } catch (error) { console.error("Error loading products:", error); }
+        // Updates your dashboard widget
+        const totalProductsText = document.getElementById('totalProductsText');
+        if (totalProductsText) {
+            totalProductsText.innerText = products.length + " Items";
+        }
+        
+    } catch (error) { 
+        console.error("Error loading products:", error); 
+    }
 }
 
 function renderInventoryTable(products) {
@@ -287,6 +292,7 @@ document.getElementById('nav-dashboard').addEventListener('click', () => {
 });
 document.getElementById('nav-inventory').addEventListener('click', () => {
     switchView('view-inventory', 'nav-inventory', 'Inventory Management');
+    loadInventory();
 });
 document.getElementById('nav-sales-ledger').addEventListener('click', () => {
     switchView('view-sales-ledger', 'nav-sales-ledger', 'Sales Ledger');
@@ -857,30 +863,6 @@ async function markDebtPaid(id) {
         }
     } catch (error) { console.error("Error marking debt as paid:", error); }
 }
-
-// ==========================================
-// 7. REAL-TIME SEARCH LOGIC
-// ==========================================
-document.getElementById('searchInput').addEventListener('input', function(event) {
-    const searchTerm = event.target.value.toLowerCase();
-    const tableRows = document.querySelectorAll('#productTableBody tr');
-    const inventoryTabIsHidden = document.getElementById('view-inventory').classList.contains('d-none');
-    
-    if (searchTerm.length > 0 && inventoryTabIsHidden) {
-        document.getElementById('nav-inventory').click(); 
-    }
-
-    tableRows.forEach(row => {
-        const itemCode = row.cells[0].textContent.toLowerCase();
-        const itemName = row.cells[1].textContent.toLowerCase();
-
-        if (itemCode.includes(searchTerm) || itemName.includes(searchTerm)) {
-            row.style.display = ''; 
-        } else {
-            row.style.display = 'none'; 
-        }
-    });
-});
 
 // ==========================================
 // 8. REPORT AGGREGATION (PHASE 8)
@@ -1735,6 +1717,114 @@ async function loadExchangeHistory(filter = 'all') {
     }
 }
 
+// =========================================================================
+// ✨ PHASE 40: PAGINATED & SEARCHABLE INVENTORY
+// =========================================================================
+
+// 1. State Variables
+let currentInventoryPage = 1;
+const inventoryItemsPerPage = 25;
+let searchTimeout = null;
+
+// 2. Debounced Search Listener
+const searchInput = document.getElementById('inventorySearchInput');
+if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        
+        // ✨ YOUR SMART TAB-SWITCHER LOGIC RESTORED
+        const inventoryTabIsHidden = document.getElementById('view-inventory').classList.contains('d-none');
+        if (e.target.value.length > 0 && inventoryTabIsHidden) {
+            document.getElementById('nav-inventory').click(); 
+        }
+
+        clearTimeout(searchTimeout);
+        
+        // Wait 300ms after typing stops before hitting the database
+        searchTimeout = setTimeout(() => {
+            currentInventoryPage = 1; // Always reset to page 1 on new search
+            loadInventory(e.target.value);
+        }, 300); 
+    });
+}
+
+// 3. The Main Data Fetcher (You are adding this!)
+// 3. The Main Data Fetcher
+async function loadInventory(searchQuery = '') {
+    try {
+        const safeSearch = encodeURIComponent(searchQuery);
+        const url = `/api/products/paginated?search=${safeSearch}&page=${currentInventoryPage}&limit=${inventoryItemsPerPage}`;
+        
+        console.log("🚀 Fetching from:", url); // This helps us debug if it fails!
+
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        console.log("📦 Database Response:", result); // Let's see exactly what the DB sent back
+
+        // Safety check: Did the backend actually send the data array?
+        if (!response.ok || !result.data) {
+            console.error("🚨 Backend failed to return data array:", result);
+            document.getElementById('inventoryPagination').innerHTML = `<li class="page-item disabled"><span class="page-link text-danger">Data Error (Check Console)</span></li>`;
+            return; 
+        }
+
+        // 1. Draw the table (wrapped in a try-catch so it can't break the buttons!)
+        if (typeof renderInventoryTable === 'function') {
+            try {
+                renderInventoryTable(result.data);
+            } catch (tableError) {
+                console.error("🚨 Error drawing the table rows:", tableError);
+            }
+        }
+
+        // 2. Draw the Pagination Buttons
+        renderPagination(result.totalItems, currentInventoryPage, inventoryItemsPerPage);
+
+    } catch (error) { 
+        console.error("🚨 Critical Error loading inventory:", error); 
+        document.getElementById('inventoryPagination').innerHTML = `<li class="page-item disabled"><span class="page-link text-danger">Network Error</span></li>`;
+    }
+}
+
+// 4. The Pagination UI Builder
+function renderPagination(totalItems, currentPage, limit) {
+    const totalPages = Math.ceil(totalItems / limit);
+    const paginationEl = document.getElementById('inventoryPagination');
+    if (!paginationEl) return;
+    
+    let html = '';
+
+    // "Previous" Button
+    html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="event.preventDefault(); changeInventoryPage(${currentPage - 1})">Previous</a>
+             </li>`;
+
+    // Dynamic Page Numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changeInventoryPage(${i})">${i}</a>
+                     </li>`;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+    }
+
+    // "Next" Button
+    html += `<li class="page-item ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="event.preventDefault(); changeInventoryPage(${currentPage + 1})">Next</a>
+             </li>`;
+
+    paginationEl.innerHTML = html;
+}
+
+// 5. Global click handler for the pagination buttons
+window.changeInventoryPage = function(newPage) {
+    currentInventoryPage = newPage;
+    const currentSearch = document.getElementById('inventorySearchInput').value || '';
+    loadInventory(currentSearch);
+};
+
 // ✨ PHASE 35: Listeners to reload tables when timeframe changes
 document.getElementById('expenseTimeframe')?.addEventListener('change', loadExpenses);
 document.getElementById('arTimeframe')?.addEventListener('change', loadAR);
@@ -1742,5 +1832,6 @@ document.getElementById('arTimeframe')?.addEventListener('change', loadAR);
 // Initialize the workspace when the app loads
 loadStickyNote();
 loadProducts();
+loadInventory();
 loadDashboardSummary();
 loadDashboardCharts();

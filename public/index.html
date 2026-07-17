@@ -82,7 +82,7 @@
                     <span class="navbar-brand mb-0 h1 text-primary fw-bold" id="pageTitle">Dashboard Overview</span>
                     
                     <form class="d-flex w-50" onsubmit="return false;">
-                        <input id="searchInput" class="form-control me-2 bg-light border-0 shadow-sm" type="search" placeholder="Search inventory..." aria-label="Search">
+                        <input id="inventorySearchInput" class="form-control me-2 bg-light border-0 shadow-sm" type="search" placeholder="Search inventory..." aria-label="Search">
                     </form>
                     
                     <div class="navbar-user">
@@ -224,19 +224,22 @@
             </div>
 
             <div id="view-inventory" class="d-none p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="fw-bold mb-0 text-primary">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+                    <h4 class="fw-bold mb-0 text-primary text-nowrap">
                         <i class="bi bi-box-seam me-2"></i> Product Management
                     </h4>
-                    <div class="d-flex gap-3">
-                        <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
+
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary fw-bold shadow-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#addProductModal">
                             <i class="bi bi-plus-lg me-1"></i> Add New Product
                         </button>
-                        <button class="btn btn-primary fw-bold shadow-sm" id="toggleLowStockBtn" onclick="toggleLowStock()">
+                        <button class="btn btn-warning fw-bold shadow-sm text-nowrap text-dark" id="toggleLowStockBtn" onclick="toggleLowStock()">
                             <i class="bi bi-exclamation-triangle me-1"></i> Show Low Stock
                         </button>
                     </div>
                 </div>
+
+                <!-- The Product Table -->
                 <div class="card shadow-sm border-0 border-top border-info border-4">
                     <div class="card-body p-0">
                         <table class="table table-hover mb-0">
@@ -254,6 +257,16 @@
                         </table>
                     </div>
                 </div>
+
+                <div class="d-flex justify-content-end mt-4 w-100">
+                    <nav aria-label="Inventory Pagination">
+                        <ul class="pagination shadow-sm mb-5" id="inventoryPagination">
+                            <!-- If JS fails, this text will show up so we know the HTML is working -->
+                            <li class="page-item disabled"><span class="page-link">Loading pages...</span></li>
+                        </ul>
+                    </nav>
+                </div>
+
             </div>
 
             <div id="view-sales-ledger" class="d-none p-4">

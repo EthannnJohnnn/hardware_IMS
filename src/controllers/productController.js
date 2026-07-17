@@ -51,7 +51,25 @@ const productController = {
             }
             res.json({ message: "Inventory updated successfully" });
         });
-    }
+    },
+
+    getPaginatedInventory: (req, res) => {
+        const search = req.query.search || '';
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50; 
+        const offset = (page - 1) * limit;
+
+        const ProductModel = require('../model/productModel'); 
+        
+        ProductModel.getInventoryPaginated(search, limit, offset, (err, result) => {
+            if (err) {
+                // ✨ ADDED LOGGER: This will print the exact SQL error to your VS Code terminal
+                console.error("🚨 Pagination Database Error:", err.message); 
+                return res.status(500).json({ error: "Failed to fetch paginated inventory" });
+            }
+            res.json(result);
+        });
+    },
 };
 
 module.exports = productController;

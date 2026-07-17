@@ -46,7 +46,28 @@ const ProductModel = {
             if (err) return callback(err);
             callback(null, { changes: this.changes });
         });
-    }
+    },
+
+    getInventoryPaginated: (search, limit, offset, callback) => {
+        const searchTerm = `%${search}%`;
+        const countSql = `SELECT COUNT(*) AS total FROM products WHERE item_code LIKE ? OR item_name LIKE ?`;
+        
+        // ✨ FIXED: Changed "ORDER BY id DESC" to "ORDER BY item_name ASC"
+        const dataSql = `SELECT * FROM products WHERE item_code LIKE ? OR item_name LIKE ? ORDER BY item_name ASC LIMIT ? OFFSET ?`;
+
+        db.get(countSql, [searchTerm, searchTerm], (err, countRow) => {
+            if (err) return callback(err, null);
+            
+            db.all(dataSql, [searchTerm, searchTerm, limit, offset], (err, rows) => {
+                if (err) return callback(err, null);
+                
+                callback(null, {
+                    totalItems: countRow.total,
+                    data: rows
+                });
+            });
+        });
+    },
 };
 
 module.exports = ProductModel;

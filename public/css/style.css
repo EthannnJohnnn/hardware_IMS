@@ -1145,3 +1145,34 @@ select:focus-visible,
         display: none;
     }
 }
+
+/* ✨ Modern Pagination Overrides */
+#inventoryPagination {
+    gap: 6px; /* Adds breathing room between buttons */
+}
+
+#inventoryPagination .page-item .page-link {
+    border: none; /* Removes the outdated hard borders */
+    border-radius: 8px; /* Smooth, modern rounded corners */
+    color: #4b5563; /* Softer dark gray text */
+    font-weight: 500;
+    padding: 8px 16px;
+    background-color: transparent;
+    transition: all 0.2s ease-in-out; /* Smooth hover effects */
+}
+
+#inventoryPagination .page-item .page-link:hover {
+    background-color: #f3f4f6; /* Light gray background on hover */
+    color: #111827;
+}
+
+#inventoryPagination .page-item.active .page-link {
+    background-color: #5145e5; /* Matches your sidebar's deep purple/indigo */
+    color: white;
+    box-shadow: 0 4px 10px rgba(81, 69, 229, 0.3); /* Soft glowing shadow */
+}
+
+#inventoryPagination .page-item.disabled .page-link {
+    color: #9ca3af; /* Faded text for disabled Previous/Next buttons */
+    background-color: transparent;
+}
