@@ -1674,6 +1674,67 @@ async function submitLedgerDelete() {
     }
 }
 
+// ✨ PHASE 38: Load Repackage History
+async function loadRepackageHistory(filter = 'all') {
+    try {
+        const response = await fetch(`/api/ledger/repacks?filter=${filter}`);
+        const repacks = await response.json();
+        const tableBody = document.getElementById('repackageTableBody');
+        if (!tableBody) return;
+        tableBody.innerHTML = '';
+
+        repacks.forEach(row => {
+            const dateObj = new Date(row.date);
+            const formattedDate = dateObj.toLocaleDateString();
+
+            tableBody.innerHTML += `
+                <tr>
+                    <td class="text-muted small">${formattedDate}</td>
+                    <td class="text-start fw-bold text-danger">${row.bulk_item_name || row.bulk_item_code}</td>
+                    <td class="fw-bold text-danger">-${row.qty_deducted}</td>
+                    <td class="text-start fw-bold text-success">${row.repacked_item_name || row.repacked_item_code}</td>
+                    <td class="fw-bold text-success">+${row.qty_added}</td>
+                </tr>
+            `;
+        });
+    } catch (error) {
+        console.error("Error loading repackage history:", error);
+    }
+}
+
+// ✨ PHASE 38: Load Exchange History
+async function loadExchangeHistory(filter = 'all') {
+    try {
+        const response = await fetch(`/api/ledger/exchanges?filter=${filter}`);
+        const exchanges = await response.json();
+        const tableBody = document.getElementById('exchangeTableBody');
+        if (!tableBody) return;
+        tableBody.innerHTML = '';
+        
+        const currencyFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
+        exchanges.forEach(row => {
+            const dateObj = new Date(row.date);
+            const formattedDate = dateObj.toLocaleDateString();
+
+            tableBody.innerHTML += `
+                <tr>
+                    <td class="text-muted small">${formattedDate}</td>
+                    <td class="text-start fw-bold text-warning">${row.returned_item_name || row.returned_item_code}</td>
+                    <td class="fw-bold text-warning">${row.returned_qty}</td>
+                    <td class="text-start fw-bold text-info">${row.given_item_name || row.given_item_code}</td>
+                    <td class="fw-bold text-info">${row.given_qty}</td>
+                    <td class="fw-bold ${row.cash_top_up > 0 ? 'text-success' : 'text-muted'}">
+                        ${row.cash_top_up > 0 ? currencyFormatter.format(row.cash_top_up) : '₱0.00'}
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (error) {
+        console.error("Error loading exchange history:", error);
+    }
+}
+
 // ✨ PHASE 35: Listeners to reload tables when timeframe changes
 document.getElementById('expenseTimeframe')?.addEventListener('change', loadExpenses);
 document.getElementById('arTimeframe')?.addEventListener('change', loadAR);

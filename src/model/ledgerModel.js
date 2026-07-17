@@ -114,6 +114,48 @@ const LedgerModel = {
             });
         });
     },
+
+    // ✨ PHASE 38: Get Repackage History with Time Filter
+    getRepackHistory: (filter, callback) => {
+        let sql = `SELECT * FROM repacks`; // Adjust table name if yours is named differently!
+        let params = [];
+
+        if (filter === 'today') {
+            sql += ` WHERE date >= date('now', 'localtime')`;
+        } else if (filter === 'weekly') {
+            sql += ` WHERE date >= date('now', '-7 days', 'localtime')`;
+        } else if (filter === 'monthly') {
+            sql += ` WHERE date >= date('now', 'start of month', 'localtime')`;
+        }
+
+        sql += ` ORDER BY date DESC`;
+
+        db.all(sql, params, (err, rows) => {
+            if (err) return callback(err, null);
+            callback(null, rows);
+        });
+    },
+
+    // ✨ PHASE 38: Get Exchange History with Time Filter
+    getExchangeHistory: (filter, callback) => {
+        let sql = `SELECT * FROM exchanges`; // Adjust table name if yours is named differently!
+        let params = [];
+
+        if (filter === 'today') {
+            sql += ` WHERE date >= date('now', 'localtime')`;
+        } else if (filter === 'weekly') {
+            sql += ` WHERE date >= date('now', '-7 days', 'localtime')`;
+        } else if (filter === 'monthly') {
+            sql += ` WHERE date >= date('now', 'start of month', 'localtime')`;
+        }
+
+        sql += ` ORDER BY date DESC`;
+
+        db.all(sql, params, (err, rows) => {
+            if (err) return callback(err, null);
+            callback(null, rows);
+        });
+    }
 };
 
 module.exports = LedgerModel;

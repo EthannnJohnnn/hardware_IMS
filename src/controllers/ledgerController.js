@@ -36,6 +36,22 @@ const ledgerController = {
             if (err) return res.status(500).json({ error: "Database error during update." });
             res.json(result);
         });
+    },
+
+    getRepacks: (req, res) => {
+        const filter = req.query.filter || 'all';
+        LedgerModel.getRepackHistory(filter, (err, result) => {
+            if (err) return res.status(500).json({ error: "Failed to load repacks" });
+            res.json(result);
+        });
+    },
+
+    getExchanges: (req, res) => {
+        const filter = req.query.filter || 'all';
+        LedgerModel.getExchangeHistory(filter, (err, result) => {
+            if (err) return res.status(500).json({ error: "Failed to load exchanges" });
+            res.json(result);
+        });
     }
 };
 

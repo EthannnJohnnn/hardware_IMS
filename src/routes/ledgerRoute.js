@@ -5,5 +5,7 @@ const ledgerController = require('../controllers/ledgerController');
 router.get('/sales', ledgerController.getSales);
 router.get('/purchases', ledgerController.getPurchases);
 router.put('/sales/edit', ledgerController.editSaleTransaction);
+router.get('/repacks', ledgerController.getRepacks);
+router.get('/exchanges', ledgerController.getExchanges);
 
 module.exports = router;
